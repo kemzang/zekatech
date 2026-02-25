@@ -1,0 +1,47 @@
+// ZekaTech - Unique design tokens (SCSS)
+// Palette: deep space blue + electric teal + warm amber
+
+$zeka-bg: #0b0f14;
+$zeka-surface: #131a22;
+$zeka-surface-elevated: #1a2433;
+$zeka-border: #243044;
+$zeka-muted: #64748b;
+$zeka-foreground: #e2e8f0;
+$zeka-foreground-strong: #f8fafc;
+
+$zeka-primary: #2dd4bf;
+$zeka-primary-hover: #5eead4;
+$zeka-primary-muted: rgba(45, 212, 191, 0.15);
+$zeka-primary-foreground: #0b0f14;
+
+$zeka-secondary: #f59e0b;
+$zeka-secondary-hover: #fbbf24;
+$zeka-secondary-muted: rgba(245, 158, 11, 0.15);
+$zeka-secondary-foreground: #0b0f14;
+
+$zeka-accent: #a78bfa;
+$zeka-accent-muted: rgba(167, 139, 250, 0.15);
+
+$zeka-destructive: #ef4444;
+$zeka-destructive-foreground: #f8fafc;
+$zeka-success: #22c55e;
+$zeka-input: #243044;
+$zeka-ring: #2dd4bf;
+$zeka-card: #131a22;
+$zeka-card-foreground: #e2e8f0;
+$zeka-popover: #1a2433;
+$zeka-popover-foreground: #e2e8f0;
+$zeka-accent-foreground: #0b0f14;
+
+$font-sans: var(--font-geist-sans), system-ui, sans-serif;
+$font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+$radius-sm: 0.375rem;
+$radius-md: 0.5rem;
+$radius-lg: 0.75rem;
+$radius-xl: 1rem;
+$radius-full: 9999px;
+
+$transition-fast: 150ms ease;
+$transition-base: 200ms ease;
+$transition-slow: 300ms ease;

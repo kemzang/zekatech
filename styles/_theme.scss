@@ -1,0 +1,43 @@
+@use "variables" as *;
+
+// Map SCSS variables to CSS custom properties for Tailwind / shadcn
+:root {
+  --background: #{$zeka-bg};
+  --foreground: #{$zeka-foreground};
+  --foreground-strong: #{$zeka-foreground-strong};
+  --surface: #{$zeka-surface};
+  --surface-elevated: #{$zeka-surface-elevated};
+  --border: #{$zeka-border};
+  --muted: #{$zeka-muted};
+  --muted-foreground: #{$zeka-muted};
+
+  --primary: #{$zeka-primary};
+  --primary-hover: #{$zeka-primary-hover};
+  --primary-muted: #{$zeka-primary-muted};
+  --primary-foreground: #{$zeka-primary-foreground};
+
+  --secondary: #{$zeka-secondary};
+  --secondary-hover: #{$zeka-secondary-hover};
+  --secondary-muted: #{$zeka-secondary-muted};
+  --secondary-foreground: #{$zeka-secondary-foreground};
+
+  --accent: #{$zeka-accent};
+  --accent-muted: #{$zeka-accent-muted};
+
+  --destructive: #{$zeka-destructive};
+  --destructive-foreground: #{$zeka-destructive-foreground};
+  --success: #{$zeka-success};
+  --input: #{$zeka-input};
+  --ring: #{$zeka-ring};
+  --card: #{$zeka-card};
+  --card-foreground: #{$zeka-card-foreground};
+  --popover: #{$zeka-popover};
+  --popover-foreground: #{$zeka-popover-foreground};
+  --accent-foreground: #{$zeka-accent-foreground};
+
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-xl: #{$radius-xl};
+  --radius-full: #{$radius-full};
+}
