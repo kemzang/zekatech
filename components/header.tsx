@@ -4,13 +4,12 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
-  Menu,
-  Code2,
   LayoutDashboard,
   LogIn,
   LogOut,
   UserPlus,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 const nav = [
   { href: "/", label: "Accueil" },
@@ -26,9 +25,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur" role="banner">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
-          <Code2 className="size-6 text-primary" />
-          ZekaTech
+        <Link href="/" className="text-foreground hover:opacity-90 transition-opacity">
+          <Logo size="sm" />
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           {nav.map((item) => (

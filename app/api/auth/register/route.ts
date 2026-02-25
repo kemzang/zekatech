@@ -34,9 +34,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(e);
+    const err = e as { code?: string; message?: string };
+    const isDbError =
+      err?.code === "P1001" ||
+      err?.message?.includes("credentials") ||
+      err?.message?.includes("Authentication failed");
     return NextResponse.json(
-      { error: "Erreur lors de l'inscription." },
-      { status: 500 }
+      {
+        error: isDbError
+          ? "Base de données indisponible. Vérifiez DATABASE_URL dans .env (utilisateur et mot de passe MySQL)."
+          : "Erreur lors de l'inscription.",
+      },
+      { status: 503 }
     );
   }
 }
