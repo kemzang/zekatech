@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProjectImagePicker } from "@/components/project-image-picker";
+import { ProjectVideoPicker } from "@/components/project-video-picker";
 
 type Project = {
   id: string;
@@ -30,6 +32,8 @@ type Project = {
   description: string | null;
   status: string;
   imageUrl: string | null;
+  imageUrls: string | null;
+  videoUrl: string | null;
   link: string | null;
   order: number;
 };
@@ -43,7 +47,8 @@ export default function EditProjectPage() {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"REALISE" | "EN_COURS" | "AUTRE">("REALISE");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
   const [link, setLink] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,7 +63,13 @@ export default function EditProjectPage() {
           setSlug(data.slug);
           setDescription(data.description ?? "");
           setStatus(data.status);
-          setImageUrl(data.imageUrl ?? "");
+          const urls = data.imageUrls
+            ? (typeof data.imageUrls === "string" ? JSON.parse(data.imageUrls) : data.imageUrls)
+            : data.imageUrl
+              ? [data.imageUrl]
+              : [];
+          setImageUrls(Array.isArray(urls) ? urls : []);
+          setVideoUrl(data.videoUrl ?? "");
           setLink(data.link ?? "");
         }
       });
@@ -76,7 +87,8 @@ export default function EditProjectPage() {
         slug,
         description: description || undefined,
         status,
-        imageUrl: imageUrl || undefined,
+        imageUrls: imageUrls.length ? imageUrls : undefined,
+        videoUrl: videoUrl || undefined,
         link: link || undefined,
       }),
     });
@@ -161,16 +173,8 @@ export default function EditProjectPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">URL image</Label>
-              <Input
-                id="imageUrl"
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="bg-background border-border"
-              />
-            </div>
+            <ProjectImagePicker value={imageUrls} onChange={setImageUrls} disabled={loading} />
+            <ProjectVideoPicker value={videoUrl} onChange={setVideoUrl} disabled={loading} />
             <div className="space-y-2">
               <Label htmlFor="link">Lien projet</Label>
               <Input

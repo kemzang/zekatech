@@ -10,6 +10,8 @@ const updateSchema = z.object({
   description: z.string().optional(),
   status: z.nativeEnum(ProjectStatus).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
+  imageUrls: z.array(z.string().min(1)).optional(),
+  videoUrl: z.string().min(1).optional().or(z.literal("")),
   link: z.string().url().optional().or(z.literal("")),
   order: z.number().int().optional(),
 });
@@ -59,6 +61,11 @@ export async function PATCH(
         ...(data.imageUrl !== undefined && {
           imageUrl: data.imageUrl || null,
         }),
+        ...(data.imageUrls !== undefined && {
+          imageUrls: data.imageUrls?.length ? JSON.stringify(data.imageUrls) : null,
+          ...(data.imageUrls?.length && { imageUrl: data.imageUrls[0] }),
+        }),
+        ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl || null }),
         ...(data.link !== undefined && { link: data.link || null }),
         ...(data.order != null && { order: data.order }),
       },

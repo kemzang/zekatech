@@ -44,16 +44,20 @@ export default async function ProjectsPage() {
             key={p.id}
             className="flex flex-col border-border bg-surface overflow-hidden"
           >
-            {p.imageUrl && (
-              <div className="aspect-video bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={p.imageUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            )}
+            {(() => {
+              const imgs = p.imageUrls ? (typeof p.imageUrls === "string" ? JSON.parse(p.imageUrls) : p.imageUrls) : [];
+              const mainImg = imgs[0] ?? p.imageUrl;
+              return mainImg ? (
+                <div className="aspect-video bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={mainImg}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : null;
+            })()}
             <CardHeader className="flex-1">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-lg">{p.title}</CardTitle>
@@ -65,21 +69,23 @@ export default async function ProjectsPage() {
                 {p.description}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {p.link ? (
+            <CardContent className="flex flex-wrap gap-2">
+              {p.link && (
                 <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={p.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href={p.link} target="_blank" rel="noopener noreferrer">
                     Voir le projet
                   </a>
                 </Button>
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  Lien à venir
-                </span>
+              )}
+              {p.videoUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={p.videoUrl} target="_blank" rel="noopener noreferrer">
+                    Vidéo
+                  </a>
+                </Button>
+              )}
+              {!p.link && !p.videoUrl && (
+                <span className="text-sm text-muted-foreground">Lien à venir</span>
               )}
             </CardContent>
           </Card>

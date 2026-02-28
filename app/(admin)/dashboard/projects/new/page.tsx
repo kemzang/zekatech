@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProjectImagePicker } from "@/components/project-image-picker";
+import { ProjectVideoPicker } from "@/components/project-video-picker";
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -29,7 +31,8 @@ export default function NewProjectPage() {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"REALISE" | "EN_COURS" | "AUTRE">("REALISE");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
   const [link, setLink] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,7 +60,8 @@ export default function NewProjectPage() {
         slug: slug || undefined,
         description: description || undefined,
         status,
-        imageUrl: imageUrl || undefined,
+        imageUrls: imageUrls.length ? imageUrls : undefined,
+        videoUrl: videoUrl || undefined,
         link: link || undefined,
       }),
     });
@@ -133,16 +137,8 @@ export default function NewProjectPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">URL image (optionnel)</Label>
-              <Input
-                id="imageUrl"
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="bg-background border-border"
-              />
-            </div>
+            <ProjectImagePicker value={imageUrls} onChange={setImageUrls} disabled={loading} />
+            <ProjectVideoPicker value={videoUrl} onChange={setVideoUrl} disabled={loading} />
             <div className="space-y-2">
               <Label htmlFor="link">Lien projet (optionnel)</Label>
               <Input

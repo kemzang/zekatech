@@ -89,6 +89,8 @@ model Project {
   description String?       @db.Text
   status      ProjectStatus @default(REALISE)
   imageUrl    String?       @map("image_url")
+  imageUrls   String?       @map("image_urls") @db.Text
+  videoUrl    String?       @map("video_url")
   link        String?
   order       Int           @default(0)
   createdAt   DateTime      @default(now()) @map("created_at")
