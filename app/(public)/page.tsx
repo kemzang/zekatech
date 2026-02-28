@@ -27,9 +27,9 @@ export default async function HomePage() {
   let partners: Awaited<ReturnType<typeof prisma.partner.findMany>> = [];
   try {
     [services, projects, partners] = await Promise.all([
-      prisma.service.findMany({ orderBy: { order: "asc" }, take: 4 }),
-      prisma.project.findMany({ orderBy: { order: "asc" }, take: 3 }),
-      prisma.partner.findMany({ orderBy: { order: "asc" }, take: 6 }),
+      prisma.service.findMany({ where: { active: true }, orderBy: { order: "asc" }, take: 4 }),
+      prisma.project.findMany({ where: { active: true }, orderBy: { order: "asc" }, take: 3 }),
+      prisma.partner.findMany({ where: { active: true }, orderBy: { order: "asc" }, take: 6 }),
     ]);
   } catch {
     // Base de données indisponible (ex. MySQL non démarré)

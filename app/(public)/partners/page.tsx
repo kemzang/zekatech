@@ -11,6 +11,7 @@ export default async function PartnersPage() {
   let partners: Awaited<ReturnType<typeof prisma.partner.findMany>> = [];
   try {
     partners = await prisma.partner.findMany({
+      where: { active: true },
       orderBy: { order: "asc" },
     });
   } catch {

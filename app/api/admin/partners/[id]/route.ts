@@ -8,6 +8,7 @@ const updateSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal("")),
   link: z.string().url().optional().or(z.literal("")),
   order: z.number().int().optional(),
+  active: z.boolean().optional(),
 });
 
 export async function GET(
@@ -52,6 +53,7 @@ export async function PATCH(
         ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl || null }),
         ...(data.link !== undefined && { link: data.link || null }),
         ...(data.order != null && { order: data.order }),
+        ...(data.active !== undefined && { active: data.active }),
       },
     });
     return NextResponse.json(partner);
@@ -75,12 +77,15 @@ export async function DELETE(
   }
   const { id } = await params;
   try {
-    await prisma.partner.delete({ where: { id } });
+    await prisma.partner.update({
+      where: { id },
+      data: { active: false },
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
-      { error: "Erreur lors de la suppression." },
+      { error: "Erreur lors de la désactivation." },
       { status: 500 }
     );
   }

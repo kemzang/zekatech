@@ -25,6 +25,7 @@ export default async function ServicesPage() {
   let services: Awaited<ReturnType<typeof prisma.service.findMany>> = [];
   try {
     services = await prisma.service.findMany({
+      where: { active: true },
       orderBy: { order: "asc" },
     });
   } catch {

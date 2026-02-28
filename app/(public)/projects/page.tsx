@@ -14,12 +14,19 @@ const statusLabel: Record<string, string> = {
   AUTRE: "Autre",
 };
 
+type ProjectRow = Awaited<ReturnType<typeof prisma.project.findMany>>[number] & {
+  videoUrl?: string | null;
+  imageUrls?: string | null;
+};
+
 export default async function ProjectsPage() {
-  let projects: Awaited<ReturnType<typeof prisma.project.findMany>> = [];
+  let projects: ProjectRow[] = [];
   try {
-    projects = await prisma.project.findMany({
+    type FindManyOptions = NonNullable<Parameters<typeof prisma.project.findMany>[0]>;
+    projects = (await prisma.project.findMany({
+      where: { active: true } as FindManyOptions["where"],
       orderBy: { order: "asc" },
-    });
+    })) as ProjectRow[];
   } catch {
     // Base de données indisponible
   }
@@ -41,9 +48,9 @@ export default async function ProjectsPage() {
             status={p.status}
             statusLabel={statusLabel[p.status]}
             link={p.link}
-            videoUrl={p.videoUrl}
+            videoUrl={p.videoUrl ?? null}
             imageUrl={p.imageUrl}
-            imageUrls={p.imageUrls}
+            imageUrls={p.imageUrls ?? null}
           />
         ))}
       </div>

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -15,64 +14,42 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ProjectImagePicker } from "@/components/project-image-picker";
-import { ProjectVideoPicker } from "@/components/project-video-picker";
 
-type Project = {
+type Service = {
   id: string;
-  title: string;
+  name: string;
   slug: string;
   description: string | null;
-  status: string;
-  imageUrl: string | null;
-  imageUrls: string | null;
-  videoUrl: string | null;
-  link: string | null;
+  icon: string | null;
   order: number;
-  active?: boolean;
+  active: boolean;
 };
 
-export default function EditProjectPage() {
+export default function EditServicePage() {
   const router = useRouter();
   const params = useParams();
   const id = String(params.id);
-  const [project, setProject] = useState<Project | null>(null);
-  const [title, setTitle] = useState("");
+  const [service, setService] = useState<Service | null>(null);
+  const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"REALISE" | "EN_COURS" | "AUTRE">("REALISE");
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [link, setLink] = useState("");
+  const [icon, setIcon] = useState("");
+  const [order, setOrder] = useState(0);
   const [active, setActive] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/admin/projects/${id}`)
+    fetch(`/api/admin/services/${id}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) {
-          setProject(data);
-          setTitle(data.title);
+          setService(data);
+          setName(data.name);
           setSlug(data.slug);
           setDescription(data.description ?? "");
-          setStatus(data.status);
-          const urls = data.imageUrls
-            ? (typeof data.imageUrls === "string" ? JSON.parse(data.imageUrls) : data.imageUrls)
-            : data.imageUrl
-              ? [data.imageUrl]
-              : [];
-          setImageUrls(Array.isArray(urls) ? urls : []);
-          setVideoUrl(data.videoUrl ?? "");
-          setLink(data.link ?? "");
+          setIcon(data.icon ?? "");
+          setOrder(data.order ?? 0);
           setActive(data.active !== false);
         }
       });
@@ -82,35 +59,33 @@ export default function EditProjectPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const res = await fetch(`/api/admin/projects/${id}`, {
+    const res = await fetch(`/api/admin/services/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title,
-        slug,
-        description: description || undefined,
-        status,
-        imageUrls: imageUrls.length ? imageUrls : undefined,
-        videoUrl: videoUrl || undefined,
-        link: link || undefined,
+        name,
+        slug: slug || undefined,
+        description: description || null,
+        icon: icon || null,
+        order,
         active,
       }),
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (res.ok) {
-      router.push("/dashboard/projects");
+      router.push("/dashboard/services");
       router.refresh();
     } else {
       setError(data.error || "Erreur.");
     }
   }
 
-  if (!project) {
+  if (!service) {
     return (
       <div>
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/projects">← Projets</Link>
+          <Link href="/dashboard/services">← Services</Link>
         </Button>
         <p className="mt-4 text-muted-foreground">Chargement...</p>
       </div>
@@ -120,12 +95,12 @@ export default function EditProjectPage() {
   return (
     <div>
       <Button variant="ghost" size="sm" asChild>
-        <Link href="/dashboard/projects">← Projets</Link>
+        <Link href="/dashboard/services">← Services</Link>
       </Button>
       <Card className="mt-4 max-w-xl border-border bg-surface">
         <CardHeader>
-          <CardTitle>Modifier le projet</CardTitle>
-          <CardDescription>{project.title}</CardDescription>
+          <CardTitle>Modifier le service</CardTitle>
+          <CardDescription>{service.name}</CardDescription>
         </CardHeader>
         <form onSubmit={onSubmit}>
           <CardContent className="space-y-4">
@@ -135,11 +110,11 @@ export default function EditProjectPage() {
               </p>
             )}
             <div className="space-y-2">
-              <Label htmlFor="title">Titre</Label>
+              <Label htmlFor="name">Nom</Label>
               <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
                 className="bg-background border-border"
               />
@@ -150,42 +125,37 @@ export default function EditProjectPage() {
                 id="slug"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                required
+                placeholder="ex: developpement-web"
                 className="bg-background border-border"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
+              <textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="icon">Icône (nom)</Label>
+              <Input
+                id="icon"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder="ex: globe, smartphone"
                 className="bg-background border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label>Statut</Label>
-              <Select value={status} onValueChange={(v: "REALISE" | "EN_COURS" | "AUTRE") => setStatus(v)}>
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="REALISE">Réalisé</SelectItem>
-                  <SelectItem value="EN_COURS">En cours</SelectItem>
-                  <SelectItem value="AUTRE">Autre</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <ProjectImagePicker value={imageUrls} onChange={setImageUrls} disabled={loading} />
-            <ProjectVideoPicker value={videoUrl} onChange={setVideoUrl} disabled={loading} />
-            <div className="space-y-2">
-              <Label htmlFor="link">Lien projet</Label>
+              <Label htmlFor="order">Ordre d’affichage</Label>
               <Input
-                id="link"
-                type="url"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
+                id="order"
+                type="number"
+                value={order}
+                onChange={(e) => setOrder(Number(e.target.value) || 0)}
                 className="bg-background border-border"
               />
             </div>

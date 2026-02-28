@@ -2,17 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { z } from "zod";
-import { ProjectStatus } from "@prisma/client";
 
 const updateSchema = z.object({
-  title: z.string().min(1).optional(),
+  name: z.string().min(1).optional(),
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/).optional(),
-  description: z.string().optional(),
-  status: z.nativeEnum(ProjectStatus).optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
-  imageUrls: z.array(z.string().min(1)).optional(),
-  videoUrl: z.string().min(1).optional().or(z.literal("")),
-  link: z.string().url().optional().or(z.literal("")),
+  description: z.string().optional().nullable(),
+  icon: z.string().optional().nullable(),
   order: z.number().int().optional(),
   active: z.boolean().optional(),
 });
@@ -27,9 +22,9 @@ export async function GET(
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
   }
   const { id } = await params;
-  const project = await prisma.project.findUnique({ where: { id } });
-  if (!project) return NextResponse.json(null, { status: 404 });
-  return NextResponse.json(project);
+  const service = await prisma.service.findUnique({ where: { id } });
+  if (!service) return NextResponse.json(null, { status: 404 });
+  return NextResponse.json(service);
 }
 
 export async function PATCH(
@@ -52,27 +47,18 @@ export async function PATCH(
       );
     }
     const data = parsed.data;
-    const project = await prisma.project.update({
+    const service = await prisma.service.update({
       where: { id },
       data: {
-        ...(data.title != null && { title: data.title }),
+        ...(data.name != null && { name: data.name }),
         ...(data.slug != null && { slug: data.slug }),
-        ...(data.description != null && { description: data.description }),
-        ...(data.status != null && { status: data.status }),
-        ...(data.imageUrl !== undefined && {
-          imageUrl: data.imageUrl || null,
-        }),
-        ...(data.imageUrls !== undefined && {
-          imageUrls: data.imageUrls?.length ? JSON.stringify(data.imageUrls) : null,
-          ...(data.imageUrls?.length && { imageUrl: data.imageUrls[0] }),
-        }),
-        ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl || null }),
-        ...(data.link !== undefined && { link: data.link || null }),
+        ...(data.description !== undefined && { description: data.description ?? null }),
+        ...(data.icon !== undefined && { icon: data.icon ?? null }),
         ...(data.order != null && { order: data.order }),
         ...(data.active !== undefined && { active: data.active }),
       },
     });
-    return NextResponse.json(project);
+    return NextResponse.json(service);
   } catch (e) {
     console.error(e);
     return NextResponse.json(
@@ -93,7 +79,7 @@ export async function DELETE(
   }
   const { id } = await params;
   try {
-    await prisma.project.update({
+    await prisma.service.update({
       where: { id },
       data: { active: false },
     });

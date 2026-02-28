@@ -21,6 +21,7 @@ type Partner = {
   logoUrl: string | null;
   link: string | null;
   order: number;
+  active?: boolean;
 };
 
 export default function EditPartnerPage() {
@@ -31,6 +32,7 @@ export default function EditPartnerPage() {
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [link, setLink] = useState("");
+  const [active, setActive] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -43,6 +45,7 @@ export default function EditPartnerPage() {
           setName(data.name);
           setLogoUrl(data.logoUrl ?? "");
           setLink(data.link ?? "");
+          setActive(data.active !== false);
         }
       });
   }, [id]);
@@ -58,6 +61,7 @@ export default function EditPartnerPage() {
         name,
         logoUrl: logoUrl || undefined,
         link: link || undefined,
+        active,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -127,6 +131,18 @@ export default function EditPartnerPage() {
                 onChange={(e) => setLink(e.target.value)}
                 className="bg-background border-border"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="active"
+                type="checkbox"
+                checked={active}
+                onChange={(e) => setActive(e.target.checked)}
+                className="size-4 rounded border-border"
+              />
+              <Label htmlFor="active" className="font-normal cursor-pointer">
+                Actif (affiché sur le site)
+              </Label>
             </div>
           </CardContent>
           <CardFooter>

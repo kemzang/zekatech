@@ -12,6 +12,7 @@ type Project = {
   status: string;
   statusLabel: string;
   imageUrls?: string | null;
+  active?: boolean;
 };
 
 export function ProjectsList({
@@ -20,7 +21,7 @@ export function ProjectsList({
   projects: Project[];
 }) {
   async function deleteProject(id: string) {
-    if (!confirm("Supprimer ce projet ?")) return;
+    if (!confirm("Désactiver ce projet ? Il ne sera plus affiché sur le site.")) return;
     const res = await fetch(`/api/admin/projects/${id}`, { method: "DELETE" });
     if (res.ok) window.location.reload();
   }
@@ -45,8 +46,15 @@ export function ProjectsList({
                   ) : null;
                 })()}
                 <div className="min-w-0">
-                  <p className="font-medium text-foreground">{p.title}</p>
-                <p className="text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-foreground">{p.title}</p>
+                    {p.active === false && (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                        Inactif
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
                     {p.slug} · {p.statusLabel}
                   </p>
                 </div>
