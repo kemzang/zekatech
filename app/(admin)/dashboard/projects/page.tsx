@@ -5,10 +5,9 @@ export const dynamic = "force-dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { ProjectStatus } from "@prisma/client";
 import { ProjectsList } from "./projects-list";
 
-const statusLabel: Record<ProjectStatus, string> = {
+const statusLabel: Record<string, string> = {
   REALISE: "Réalisé",
   EN_COURS: "En cours",
   AUTRE: "Autre",

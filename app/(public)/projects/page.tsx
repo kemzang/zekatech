@@ -1,14 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ProjectCard } from "@/components/project-card";
+
 export const metadata = {
   title: "Projets | ZekaTech",
   description: "Projets réalisés et en cours.",
@@ -40,55 +34,17 @@ export default async function ProjectsPage() {
       </div>
       <div className="mx-auto mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((p) => (
-          <Card
+          <ProjectCard
             key={p.id}
-            className="flex flex-col border-border bg-surface overflow-hidden"
-          >
-            {(() => {
-              const imgs = p.imageUrls ? (typeof p.imageUrls === "string" ? JSON.parse(p.imageUrls) : p.imageUrls) : [];
-              const mainImg = imgs[0] ?? p.imageUrl;
-              return mainImg ? (
-                <div className="aspect-video bg-muted">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={mainImg}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : null;
-            })()}
-            <CardHeader className="flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg">{p.title}</CardTitle>
-                <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">
-                  {statusLabel[p.status]}
-                </span>
-              </div>
-              <CardDescription className="line-clamp-3">
-                {p.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {p.link && (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={p.link} target="_blank" rel="noopener noreferrer">
-                    Voir le projet
-                  </a>
-                </Button>
-              )}
-              {p.videoUrl && (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={p.videoUrl} target="_blank" rel="noopener noreferrer">
-                    Vidéo
-                  </a>
-                </Button>
-              )}
-              {!p.link && !p.videoUrl && (
-                <span className="text-sm text-muted-foreground">Lien à venir</span>
-              )}
-            </CardContent>
-          </Card>
+            title={p.title}
+            description={p.description}
+            status={p.status}
+            statusLabel={statusLabel[p.status]}
+            link={p.link}
+            videoUrl={p.videoUrl}
+            imageUrl={p.imageUrl}
+            imageUrls={p.imageUrls}
+          />
         ))}
       </div>
       {projects.length === 0 && (

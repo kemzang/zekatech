@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Code2, Globe, Smartphone, Server, ArrowRight } from "lucide-react";
 import { NewsletterBlock } from "@/components/newsletter-block";
+import { ProjectCard } from "@/components/project-card";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   globe: Globe,
@@ -36,6 +37,11 @@ export default async function HomePage() {
   type ServiceItem = (typeof services)[number];
   type ProjectItem = (typeof projects)[number];
   type PartnerItem = (typeof partners)[number];
+  const projectStatusLabel: Record<string, string> = {
+    REALISE: "Réalisé",
+    EN_COURS: "En cours",
+    AUTRE: "Autre",
+  };
 
   return (
     <div>
@@ -104,52 +110,17 @@ export default async function HomePage() {
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p: ProjectItem) => (
-              <Card
+              <ProjectCard
                 key={p.id}
-                className="border-border bg-surface overflow-hidden"
-              >
-                {(() => {
-                  const imgs = p.imageUrls ? (typeof p.imageUrls === "string" ? JSON.parse(p.imageUrls) : p.imageUrls) : [];
-                  const mainImg = imgs[0] ?? p.imageUrl;
-                  return mainImg ? (
-                    <div className="aspect-video bg-muted">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={mainImg}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ) : null;
-                })()}
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{p.title}</CardTitle>
-                    <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">
-                      {p.status}
-                    </span>
-                  </div>
-                  <CardDescription className="line-clamp-2">
-                    {p.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  {p.link && (
-                    <Button variant="link" size="sm" asChild>
-                      <a href={p.link} target="_blank" rel="noopener noreferrer">
-                        Voir le projet
-                      </a>
-                    </Button>
-                  )}
-                  {(p as { videoUrl?: string | null }).videoUrl && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={(p as { videoUrl: string }).videoUrl} target="_blank" rel="noopener noreferrer">
-                        Vidéo
-                      </a>
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+                title={p.title}
+                description={p.description}
+                status={p.status}
+                statusLabel={projectStatusLabel[p.status] ?? p.status}
+                link={p.link}
+                videoUrl={(p as { videoUrl?: string | null }).videoUrl ?? null}
+                imageUrl={p.imageUrl}
+                imageUrls={(p as { imageUrls?: string | null }).imageUrls ?? null}
+              />
             ))}
           </div>
           <div className="mt-6 text-center">
