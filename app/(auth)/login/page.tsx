@@ -21,6 +21,7 @@ function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +32,7 @@ function LoginForm() {
     const res = await signIn("credentials", {
       email,
       password,
+      remember: rememberMe ? "true" : "false",
       redirect: false,
       callbackUrl,
     });
@@ -71,8 +73,16 @@ function LoginForm() {
                 className="bg-background border-border"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+            <div className="space-y-2 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Mot de passe</Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -82,6 +92,18 @@ function LoginForm() {
                 autoComplete="current-password"
                 className="bg-background border-border"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="size-4 rounded border-border"
+              />
+              <Label htmlFor="remember" className="font-normal cursor-pointer text-sm">
+                Se souvenir de moi
+              </Label>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">

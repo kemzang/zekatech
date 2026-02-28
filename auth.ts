@@ -9,6 +9,7 @@ declare module "next-auth" {
   interface User {
     id: string;
     role: AppRole;
+    remember?: boolean;
   }
   interface Session {
     user: {
@@ -34,6 +35,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
+        remember: { label: "Se souvenir de moi", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -47,11 +49,13 @@ export const authOptions: NextAuthOptions = {
             user.passwordHash
           );
           if (!ok) return null;
+          const remember = credentials.remember === "true";
           return {
             id: user.id,
             email: user.email,
             name: user.name,
             role: user.role as AppRole,
+            remember,
           };
         } catch {
           return null;
@@ -67,6 +71,9 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.email = user.email;
         token.name = user.name;
+        // Se souvenir de moi : 30 jours, sinon 1 jour (session courte)
+        const maxAge = user.remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60;
+        token.exp = Math.floor(Date.now() / 1000) + maxAge;
       }
       return token;
     },
