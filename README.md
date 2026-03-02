@@ -1,6 +1,6 @@
 # ZekaTech – Site vitrine développement logiciel
 
-Next.js 16, React 19, Tailwind v4, SCSS, shadcn/ui, Prisma (MySQL), NextAuth.
+Next.js 16, React 19, Tailwind v4, SCSS, shadcn/ui, Prisma (PostgreSQL), NextAuth.
 
 ## Démarrage
 
@@ -8,14 +8,14 @@ Next.js 16, React 19, Tailwind v4, SCSS, shadcn/ui, Prisma (MySQL), NextAuth.
 
 Copiez `.env.example` vers `.env` et renseignez :
 
-- **DATABASE_URL** : chaîne de connexion MySQL (`mysql://USER:PASSWORD@localhost:3306/zekatech`)
+- **DATABASE_URL** : chaîne de connexion PostgreSQL (`postgresql://USER:PASSWORD@localhost:5432/zekatech`)
 - **NEXTAUTH_URL** : URL du site (ex. `http://localhost:3000`)
 - **NEXTAUTH_SECRET** : secret pour les sessions (ex. `openssl rand -base64 32`)
 
 ### 2. Base de données
 
 ```bash
-npm run db:push    # Crée les tables MySQL
+npm run db:push    # Crée les tables PostgreSQL
 npm run db:seed    # Insère admin + données de test
 ```
 
@@ -51,5 +51,5 @@ Ouvrir [http://localhost:3000](http://localhost:3000).
 ## Stack
 
 - **Front** : Next.js 16 (App Router), React 19, Tailwind v4, SCSS, shadcn/ui
-- **Back** : Route Handlers Next.js, Prisma, MySQL
+- **Back** : Route Handlers Next.js, Prisma, PostgreSQL
 - **Auth** : NextAuth v4 (Credentials), JWT

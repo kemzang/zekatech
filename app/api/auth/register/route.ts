@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: isDbError
-          ? "Base de données indisponible. Vérifiez DATABASE_URL dans .env (utilisateur et mot de passe MySQL)."
+          ? "Base de données indisponible. Vérifiez DATABASE_URL dans .env (utilisateur et mot de passe PostgreSQL)."
           : "Erreur lors de l'inscription.",
       },
       { status: 503 }

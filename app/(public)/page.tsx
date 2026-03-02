@@ -32,7 +32,7 @@ export default async function HomePage() {
       prisma.partner.findMany({ where: { active: true }, orderBy: { order: "asc" }, take: 6 }),
     ]);
   } catch {
-    // Base de données indisponible (ex. MySQL non démarré)
+    // Base de données indisponible (ex. PostgreSQL non démarré)
   }
   type ServiceItem = (typeof services)[number];
   type ProjectItem = (typeof projects)[number];
