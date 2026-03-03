@@ -1,7 +1,7 @@
 @use "../styles/variables" as *;
 @use "../styles/theme" as *;
 
-@import "tailwindcss";
+@use "tailwindcss";
 
 @theme inline {
   --color-background: var(--background);

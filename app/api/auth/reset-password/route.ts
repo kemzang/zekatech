@@ -44,13 +44,13 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    await prisma.$transaction([
-      prisma.user.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: reset.userId },
         data: { passwordHash },
-      }),
-      db.passwordResetToken.delete({ where: { id: reset.id } }) as ReturnType<typeof prisma.user.update>,
-    ]);
+      });
+      await (tx as PrismaWithReset).passwordResetToken.delete({ where: { id: reset.id } });
+    });
 
     return NextResponse.json({ ok: true });
   } catch (e) {
