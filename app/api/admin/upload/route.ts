@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "projects");
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
@@ -21,6 +18,7 @@ export async function POST(req: Request) {
     const videoFile = formData.get("video");
     const files = formData.getAll("files") as File[];
 
+    // Upload vidéo
     if (videoFile && videoFile instanceof File && videoFile.size > 0) {
       if (!ALLOWED_VIDEO_TYPES.includes(videoFile.type)) {
         return NextResponse.json(
@@ -34,15 +32,12 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-      await mkdir(UPLOAD_DIR, { recursive: true });
-      const ext = path.extname(videoFile.name) || ".mp4";
-      const name = `v-${randomUUID()}${ext}`;
-      const filePath = path.join(UPLOAD_DIR, name);
-      const buf = Buffer.from(await videoFile.arrayBuffer());
-      await writeFile(filePath, buf);
-      return NextResponse.json({ url: `/uploads/projects/${name}` });
+
+      const url = await uploadToCloudinary(videoFile, "zekatech/projects/videos", "video");
+      return NextResponse.json({ url });
     }
 
+    // Upload images
     const fileArray = files.filter((f): f is File => f instanceof File && f.size > 0);
     if (!fileArray.length) {
       return NextResponse.json(
@@ -50,7 +45,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    await mkdir(UPLOAD_DIR, { recursive: true });
+
     const urls: string[] = [];
     for (const file of fileArray) {
       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -65,13 +60,11 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-      const ext = path.extname(file.name) || ".jpg";
-      const name = `${randomUUID()}${ext}`;
-      const filePath = path.join(UPLOAD_DIR, name);
-      const buf = Buffer.from(await file.arrayBuffer());
-      await writeFile(filePath, buf);
-      urls.push(`/uploads/projects/${name}`);
+
+      const url = await uploadToCloudinary(file, "zekatech/projects/images", "image");
+      urls.push(url);
     }
+
     return NextResponse.json({ urls });
   } catch (e) {
     console.error(e);
