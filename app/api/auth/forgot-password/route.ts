@@ -3,13 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 
-type PrismaWithReset = typeof prisma & {
-  passwordResetToken: {
-    deleteMany: (args: { where: { userId: string } }) => Promise<unknown>;
-    create: (args: { data: { userId: string; token: string; expiresAt: Date } }) => Promise<{ id: string }>;
-  };
-};
-
 const schema = z.object({
   email: z.string().email(),
 });
@@ -40,9 +33,8 @@ export async function POST(req: Request) {
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + RESET_EXPIRY_HOURS * 60 * 60 * 1000);
 
-    const db = prisma as PrismaWithReset;
-    await db.passwordResetToken.deleteMany({ where: { userId: user.id } });
-    await db.passwordResetToken.create({
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+    await prisma.passwordResetToken.create({
       data: { userId: user.id, token, expiresAt },
     });
 

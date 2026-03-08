@@ -9,7 +9,10 @@ import {
   Users,
   Newspaper,
   Wrench,
+  UserCircle,
+  LogOut,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const nav = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -34,12 +37,16 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen">
       <aside className="w-56 border-r border-border bg-surface">
         <div className="sticky top-0 flex flex-col gap-1 p-4">
-          <Link
-            href="/dashboard"
-            className="mb-4 font-semibold text-foreground"
-          >
-            Admin
-          </Link>
+          <div className="mb-4 flex items-center justify-between">
+            <Link href="/dashboard" className="font-semibold text-foreground">
+              Admin
+            </Link>
+            <Link href="/dashboard/profile">
+              <Button variant="ghost" size="icon" className="size-8 rounded-full">
+                <UserCircle className="size-5" />
+              </Button>
+            </Link>
+          </div>
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -56,6 +63,16 @@ export default async function DashboardLayout({
           >
             Retour au site
           </Link>
+          <form action="/api/auth/signout" method="POST" className="mt-2">
+            <Button
+              type="submit"
+              variant="ghost"
+              className="w-full justify-start gap-2 text-sm text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+            >
+              <LogOut className="size-4" />
+              Déconnexion
+            </Button>
+          </form>
         </div>
       </aside>
       <main className="flex-1 overflow-auto bg-background p-6">
