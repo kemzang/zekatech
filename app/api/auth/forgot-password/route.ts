@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendPasswordResetEmail } from "@/lib/email";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
     const { email } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
+    
     // Toujours renvoyer ok pour ne pas révéler si l'email existe
     if (!user) {
       return NextResponse.json({
@@ -33,6 +35,7 @@ export async function POST(req: Request) {
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + RESET_EXPIRY_HOURS * 60 * 60 * 1000);
 
+    // Supprimer les anciens tokens et créer le nouveau
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
     await prisma.passwordResetToken.create({
       data: { userId: user.id, token, expiresAt },
@@ -41,14 +44,18 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXTAUTH_URL ?? (req.headers.get("origin") || "http://localhost:3000");
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
-    // TODO: envoyer l'email avec resetLink (ex: nodemailer, Resend, SendGrid)
-    // Pour l'instant en dev on peut retourner le lien pour tester
-    const isDev = process.env.NODE_ENV === "development";
+    // Envoyer l'email
+    try {
+      await sendPasswordResetEmail(email, resetLink, user.name || undefined);
+      console.log(`✅ Email de réinitialisation envoyé à ${email}`);
+    } catch (emailError) {
+      console.error("❌ Erreur lors de l'envoi de l'email:", emailError);
+      // On ne révèle pas l'erreur à l'utilisateur pour des raisons de sécurité
+    }
 
     return NextResponse.json({
       ok: true,
       message: "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation.",
-      ...(isDev && { resetLink }),
     });
   } catch (e) {
     console.error(e);
