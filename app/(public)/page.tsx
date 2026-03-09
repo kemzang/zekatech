@@ -45,26 +45,59 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
-            Développement logiciel sur mesure
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Web, mobile, API et conseil. Je conçois et réalise vos projets avec
-            des technologies modernes.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg">
-              <Link href="/services">
-                Voir les services
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/contact">Me contacter</Link>
-            </Button>
+      {/* Hero avec image background professionnelle */}
+      <section className="relative overflow-hidden">
+        {/* Image de fond avec overlay */}
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop"
+            alt="Technology background"
+            className="h-full w-full object-cover"
+          />
+          {/* Overlay sombre pour la lisibilité */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/60" />
+        </div>
+        
+        {/* Contenu du hero */}
+        <div className="container relative mx-auto px-4 py-20 md:py-32">
+          <div className="mx-auto max-w-3xl text-center">
+            {/* <div className="mb-6 inline-block rounded-full bg-primary/20 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-primary-foreground border border-primary/30">
+              💼 Développeur Full-Stack
+            </div> */}
+            <h1 className="text-4xl font-bold tracking-tight text-white md:text-6xl lg:text-7xl drop-shadow-lg">
+              Développement logiciel sur mesure
+            </h1>
+            <p className="mt-6 text-lg text-gray-200 md:text-xl">
+              Web, mobile, API et conseil. Je conçois et réalise vos projets avec
+              des technologies modernes.
+            </p>
+            <div className="mt-10 flex flex-wrap justify-center gap-4">
+              <Button asChild size="lg" className="shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90">
+                <Link href="/services">
+                  Voir les services
+                  <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20">
+                <Link href="/contact">Me contacter</Link>
+              </Button>
+            </div>
+            
+            {/* Stats ou badges */}
+            {/* <div className="mt-16 grid grid-cols-3 gap-8 border-t border-white/20 pt-8">
+              <div>
+                <div className="text-3xl font-bold text-white">50+</div>
+                <div className="text-sm text-gray-300">Projets réalisés</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white">100%</div>
+                <div className="text-sm text-gray-300">Satisfaction client</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white">24/7</div>
+                <div className="text-sm text-gray-300">Support disponible</div>
+              </div>
+            </div> */}
           </div>
         </div>
       </section>
