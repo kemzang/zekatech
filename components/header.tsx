@@ -62,7 +62,7 @@ export function Header() {
                   </Button>
                 )}
                 <Button variant="ghost" size="icon" asChild>
-                  <Link href={session.user.role === "ADMIN" ? "/dashboard/profile" : "/profile"}>
+                  <Link href="/profile">
                     <UserCircle className="size-5" />
                   </Link>
                 </Button>
