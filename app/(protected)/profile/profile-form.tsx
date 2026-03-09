@@ -35,7 +35,10 @@ export function ProfileForm({ user }: { user: User }) {
 
     if (res.ok) {
       setMessage("Profil mis à jour avec succès!");
-      setTimeout(() => window.location.reload(), 1500);
+      // Forcer la mise à jour de la session
+      setTimeout(() => {
+        window.location.href = window.location.href;
+      }, 1500);
     } else {
       setMessage(data.error || "Erreur lors de la mise à jour");
     }

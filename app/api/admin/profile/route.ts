@@ -7,13 +7,16 @@ export async function PUT(req: Request) {
     const session = await requireAdmin();
     const { name } = await req.json();
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { email: session.user.email! },
       data: { name },
     });
 
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+    console.log("✅ Profil admin mis à jour:", updatedUser.name);
+
+    return NextResponse.json({ ok: true, name: updatedUser.name });
+  } catch (error) {
+    console.error("❌ Erreur mise à jour profil admin:", error);
+    return NextResponse.json({ error: "Erreur lors de la mise à jour." }, { status: 500 });
   }
 }
