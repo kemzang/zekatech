@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ type User = {
 };
 
 export function ProfileForm({ user }: { user: User }) {
+  const { update } = useSession();
   const [name, setName] = useState(user.name || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -35,10 +37,11 @@ export function ProfileForm({ user }: { user: User }) {
 
     if (res.ok) {
       setMessage("Profil mis à jour avec succès!");
-      // Forcer la mise à jour de la session
+      // Mettre à jour la session NextAuth
+      await update({ name: data.name });
       setTimeout(() => {
-        window.location.href = window.location.href;
-      }, 1500);
+        setMessage("");
+      }, 3000);
     } else {
       setMessage(data.error || "Erreur lors de la mise à jour");
     }

@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -75,12 +75,18 @@ export const authOptions: NextAuthOptions = {
         const maxAge = user.remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60;
         token.exp = Math.floor(Date.now() / 1000) + maxAge;
       }
+      // Mettre à jour le token quand la session est mise à jour
+      if (trigger === "update" && session?.name) {
+        token.name = session.name;
+      }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.name = token.name as string | null;
+        session.user.email = token.email as string | null;
       }
       return session;
     },
