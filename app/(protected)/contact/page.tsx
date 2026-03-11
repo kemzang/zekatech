@@ -100,9 +100,34 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-12">
+    <div>
+      {/* Hero avec image background */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?q=80&w=2074&auto=format&fit=crop"
+            alt="Communication"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-black/75 to-primary/40" />
+        </div>
+        
+        <div className="container relative mx-auto px-4 py-12 md:py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl drop-shadow-lg">
+              Contactez-moi
+            </h1>
+            <p className="mt-3 text-base text-gray-200 md:text-lg">
+              Décrivez votre projet et je vous répondrai dans les plus brefs délais.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Formulaire de contact */}
-      <Card className="border-border bg-surface">
+      <section className="py-12">
+        <div className="container mx-auto max-w-2xl px-4">
+          <Card className="border-border bg-surface">
         <CardHeader>
           <CardTitle>Nouveau message</CardTitle>
           <CardDescription>
@@ -167,6 +192,8 @@ export default function ContactPage() {
           </form>
         </CardContent>
       </Card>
+        </div>
+      </section>
 
       {/* Bouton flottant pour ouvrir les messages */}
       {history.length > 0 && (
