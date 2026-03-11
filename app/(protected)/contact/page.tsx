@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MessageSquare, Clock } from "lucide-react";
+import { LoadingPage } from "@/components/loading-spinner";
 
 type Service = { id: string; name: string };
 type ContactRequest = {
@@ -95,13 +96,7 @@ export default function ContactPage() {
   }
 
   if (status === "loading" || status === "unauthenticated") {
-    return (
-      <div className="container mx-auto flex min-h-[50vh] items-center justify-center px-4">
-        <p className="text-muted-foreground">
-          {status === "loading" ? "Chargement..." : "Redirection..."}
-        </p>
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   return (
@@ -174,19 +169,21 @@ export default function ContactPage() {
       </Card>
 
       {/* Bouton flottant pour ouvrir les messages */}
-      <button
-        onClick={() => setShowHistory(true)}
-        className="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-primary px-6 py-4 text-primary-foreground shadow-lg hover:bg-primary/90 transition-all hover:scale-105"
-        aria-label="Voir mes messages"
-      >
-        <MessageSquare className="size-5" />
-        <span className="font-medium">Mes messages</span>
-        {history.filter((m) => !m.read).length > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-            {history.filter((m) => !m.read).length}
-          </span>
-        )}
-      </button>
+      {history.length > 0 && (
+        <button
+          onClick={() => setShowHistory(true)}
+          className="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-primary px-6 py-4 text-primary-foreground shadow-lg hover:bg-primary/90 transition-all hover:scale-105"
+          aria-label="Voir mes messages"
+        >
+          <MessageSquare className="size-5" />
+          <span className="font-medium">Mes messages</span>
+          {history.filter((m) => !m.read).length > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground animate-pulse">
+              {history.filter((m) => !m.read).length}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Drawer (panneau latéral) pour l'historique */}
       {showHistory && (

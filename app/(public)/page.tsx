@@ -50,12 +50,12 @@ export default async function HomePage() {
         {/* Image de fond avec overlay */}
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop"
-            alt="Technology background"
+            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop"
+            alt="Team collaboration"
             className="h-full w-full object-cover"
           />
           {/* Overlay sombre pour la lisibilité */}
-          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-black/75 to-primary/40" />
         </div>
         
         {/* Contenu du hero */}
