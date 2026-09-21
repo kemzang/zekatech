@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2 } from "lucide-react";
@@ -22,10 +24,11 @@ export function ProjectsList({
 }: {
   projects: Project[];
 }) {
+  const router = useRouter();
   async function deleteProject(id: string) {
     if (!confirm("Désactiver ce projet ? Il ne sera plus affiché sur le site.")) return;
     const res = await fetch(`/api/admin/projects/${id}`, { method: "DELETE" });
-    if (res.ok) window.location.reload();
+    if (res.ok) router.refresh();
   }
 
   return (
@@ -40,9 +43,14 @@ export function ProjectsList({
                 {(() => {
                   const first = parseImageUrls(p.imageUrls, p.imageUrl)[0] ?? null;
                   return first ? (
-                    <div className="size-12 shrink-0 overflow-hidden rounded border border-border bg-muted">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={first} alt="" className="size-full object-cover" />
+                    <div className="relative size-12 shrink-0 overflow-hidden rounded border border-border bg-muted">
+                      <Image
+                        src={first}
+                        alt=""
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
                     </div>
                   ) : null;
                 })()}

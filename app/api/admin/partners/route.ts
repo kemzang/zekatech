@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { invalidPayload, prismaError } from "@/lib/api-errors";
@@ -42,7 +43,9 @@ export async function POST(req: Request) {
         order: data.order ?? 0,
       },
     });
-    return NextResponse.json(partner);
+    revalidatePath("/");
+    revalidatePath("/partners");
+return NextResponse.json(partner);
   } catch (e) {
     return prismaError(e, "Erreur lors de la création.");
   }

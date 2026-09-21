@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2 } from "lucide-react";
@@ -16,10 +17,11 @@ type Service = {
 };
 
 export function ServicesList({ services }: { services: Service[] }) {
+  const router = useRouter();
   async function deleteService(id: string) {
     if (!confirm("Désactiver ce service ? Il ne sera plus affiché sur le site.")) return;
     const res = await fetch(`/api/admin/services/${id}`, { method: "DELETE" });
-    if (res.ok) window.location.reload();
+    if (res.ok) router.refresh();
   }
 
   return (

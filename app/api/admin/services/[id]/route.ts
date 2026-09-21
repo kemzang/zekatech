@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { invalidPayload, prismaError } from "@/lib/api-errors";
@@ -54,7 +55,9 @@ export async function PATCH(
         ...(data.active !== undefined && { active: data.active }),
       },
     });
-    return NextResponse.json(service);
+    revalidatePath("/");
+    revalidatePath("/services");
+return NextResponse.json(service);
   } catch (e) {
     return prismaError(e, "Erreur lors de la mise à jour.");
   }
@@ -82,7 +85,9 @@ export async function DELETE(
       where: { id },
       data: { active: false },
     });
-    return NextResponse.json({ ok: true });
+    revalidatePath("/");
+    revalidatePath("/services");
+return NextResponse.json({ ok: true });
   } catch (e) {
     return prismaError(e, "Erreur lors de la désactivation.");
   }

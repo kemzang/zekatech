@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+// Rendu statique regenere toutes les 5 minutes, plus revalidation
+// immediate declenchee par les mutations du back-office.
+export const revalidate = 300;
 import { Button } from "@/components/ui/button";
 import {
   Card,

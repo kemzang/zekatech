@@ -1,135 +1,106 @@
-import { prisma } from "@/lib/prisma";
-
-export const dynamic = "force-dynamic";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FolderKanban, Mail, Newspaper, Users } from "lucide-react";
+import { PROJECT_STATUS_ORDER, projectStatusLabel } from "@/lib/project-status";
 import { DashboardCharts } from "./dashboard-charts";
 
-const MOIS: Record<number, string> = {
-  1: "Janv.", 2: "Févr.", 3: "Mars", 4: "Avr.", 5: "Mai", 6: "Juin",
-  7: "Juil.", 8: "Août", 9: "Sept.", 10: "Oct.", 11: "Nov.", 12: "Déc.",
-};
+export const dynamic = "force-dynamic";
+
+const MOIS = [
+  "Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin",
+  "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc.",
+];
 
 function formatMonth(d: Date) {
-  return `${MOIS[d.getMonth() + 1]} ${String(d.getFullYear()).slice(-2)}`;
+  return `${MOIS[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`;
 }
 
+/** Une ligne par mois renvoyée par les agrégations SQL. */
+type MonthRow = { month: Date; count: number };
+
 export default async function DashboardPage() {
+  const now = new Date();
+  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+  // Tout est agrégé côté base : aucune table n'est chargée en mémoire pour
+  // être comptée en JavaScript.
   const [
     projectsCount,
     contactsCount,
     newsletterCount,
     partnersCount,
-    projects,
-    contacts,
-    subscribers,
+    unreadContacts,
+    statusGroups,
+    serviceGroups,
     services,
+    contactsPerMonth,
+    subscribersPerMonth,
   ] = await Promise.all([
     prisma.project.count(),
     prisma.contactRequest.count(),
     prisma.newsletterSubscriber.count({ where: { active: true } }),
     prisma.partner.count(),
-    prisma.project.findMany({ select: { status: true } }),
-    prisma.contactRequest.findMany({
-      select: {
-        createdAt: true,
-        read: true,
-        serviceId: true,
-        service: { select: { name: true } },
-      },
-    }),
-    prisma.newsletterSubscriber.findMany({
-      where: { active: true },
-      select: { createdAt: true },
-      orderBy: { createdAt: "asc" },
-    }),
+    prisma.contactRequest.count({ where: { read: false } }),
+    prisma.project.groupBy({ by: ["status"], _count: { _all: true } }),
+    prisma.contactRequest.groupBy({ by: ["serviceId"], _count: { _all: true } }),
     prisma.service.findMany({ select: { id: true, name: true } }),
+    prisma.$queryRaw<MonthRow[]>`
+      SELECT date_trunc('month', "created_at") AS month, COUNT(*)::int AS count
+      FROM "ContactRequest"
+      WHERE "created_at" >= ${twelveMonthsAgo}
+      GROUP BY 1
+      ORDER BY 1
+    `,
+    prisma.$queryRaw<MonthRow[]>`
+      SELECT date_trunc('month', "created_at") AS month, COUNT(*)::int AS count
+      FROM "NewsletterSubscriber"
+      WHERE "active" = true
+      GROUP BY 1
+      ORDER BY 1
+    `,
   ]);
 
-  const unreadContacts = await prisma.contactRequest.count({
-    where: { read: false },
-  });
-
-  // Projets par statut
-  const statusCount: Record<string, number> = {};
-  for (const p of projects) {
-    statusCount[p.status] = (statusCount[p.status] ?? 0) + 1;
-  }
-  const projectsByStatus = ["REALISE", "EN_COURS", "AUTRE"].map((s) => ({
-    name: s === "REALISE" ? "Réalisé" : s === "EN_COURS" ? "En cours" : "Autre",
-    count: statusCount[s] ?? 0,
+  const statusCount = new Map(statusGroups.map((g) => [g.status, g._count._all]));
+  const projectsByStatus = PROJECT_STATUS_ORDER.map((status) => ({
+    name: projectStatusLabel(status),
+    count: statusCount.get(status) ?? 0,
   }));
 
-  // Contacts par mois (12 derniers mois)
-  const now = new Date();
+  // 12 derniers mois, trous compris.
   const monthKeys: string[] = [];
   for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    monthKeys.push(formatMonth(d));
+    monthKeys.push(
+      formatMonth(new Date(now.getFullYear(), now.getMonth() - i, 1))
+    );
   }
-  const contactCountByMonth: Record<string, number> = Object.fromEntries(
-    monthKeys.map((k) => [k, 0])
+  const contactsPerMonthMap = new Map(
+    contactsPerMonth.map((r) => [formatMonth(new Date(r.month)), r.count])
   );
-  for (const c of contacts) {
-    const key = formatMonth(c.createdAt);
-    if (key in contactCountByMonth) contactCountByMonth[key]++;
-  }
   const contactsByMonth = monthKeys.map((month) => ({
     month,
-    demandes: contactCountByMonth[month] ?? 0,
+    demandes: contactsPerMonthMap.get(month) ?? 0,
   }));
 
-  // Contacts par service
-  const byService: Record<string, number> = {};
-  for (const c of contacts) {
-    const name = c.service?.name ?? "Inconnu";
-    byService[name] = (byService[name] ?? 0) + 1;
-  }
-  const contactsByService = services
-    .map((s) => ({ name: s.name, count: byService[s.name] ?? 0 }))
+  const serviceNames = new Map(services.map((s) => [s.id, s.name]));
+  const contactsByService = serviceGroups
+    .map((g) => ({
+      name: serviceNames.get(g.serviceId) ?? "Inconnu",
+      count: g._count._all,
+    }))
     .filter((d) => d.count > 0)
     .sort((a, b) => b.count - a.count);
-  if (contactsByService.length === 0 && contacts.length > 0) {
-    contactsByService.push({
-      name: "Autre",
-      count: contacts.length,
-    });
-  }
 
-  // Lus / non lus
-  const read = contacts.filter((c) => c.read).length;
-  const unread = contacts.length - read;
   const contactsReadUnread = [
-    { name: "Lus", value: read },
-    { name: "Non lus", value: unread },
+    { name: "Lus", value: contactsCount - unreadContacts },
+    { name: "Non lus", value: unreadContacts },
   ];
 
-  // Newsletter : évolution cumulative par mois
-  const subByMonth: Record<string, number> = {};
-  const subMonthKeys: { y: number; m: number }[] = [];
-  for (const s of subscribers) {
-    const d = s.createdAt;
-    const key = formatMonth(d);
-    subByMonth[key] = (subByMonth[key] ?? 0) + 1;
-    subMonthKeys.push({ y: d.getFullYear(), m: d.getMonth() });
-  }
-  subMonthKeys.sort((a, b) => (a.y !== b.y ? a.y - b.y : a.m - b.m));
-  const seen = new Set<string>();
-  const sortedMonths: string[] = [];
-  for (const { y, m } of subMonthKeys) {
-    const d = new Date(y, m, 1);
-    const key = formatMonth(d);
-    if (!seen.has(key)) {
-      seen.add(key);
-      sortedMonths.push(key);
-    }
-  }
   let cumul = 0;
-  const newsletterByMonth = sortedMonths.map((month) => {
-    cumul += subByMonth[month] ?? 0;
-    return { month, abonnes: cumul };
+  const newsletterByMonth = subscribersPerMonth.map((r) => {
+    cumul += r.count;
+    return { month: formatMonth(new Date(r.month)), abonnes: cumul };
   });
 
   const cards = [
@@ -179,9 +150,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-foreground">{c.value}</p>
-              {c.sub && (
-                <p className="text-xs text-muted-foreground">{c.sub}</p>
-              )}
+              {c.sub && <p className="text-xs text-muted-foreground">{c.sub}</p>}
               <Button variant="ghost" size="sm" className="mt-2" asChild>
                 <Link href={c.href}>Voir</Link>
               </Button>

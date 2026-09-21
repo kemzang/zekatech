@@ -1,21 +1,28 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-
-export const dynamic = "force-dynamic";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { Pagination, resolvePage } from "@/components/pagination";
+import { projectStatusLabel } from "@/lib/project-status";
 import { ProjectsList } from "./projects-list";
 
-const statusLabel: Record<string, string> = {
-  REALISE: "Réalisé",
-  EN_COURS: "En cours",
-  AUTRE: "Autre",
-};
+export const dynamic = "force-dynamic";
 
-export default async function DashboardProjectsPage() {
+const PAGE_SIZE = 20;
+
+export default async function DashboardProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const total = await prisma.project.count();
+  const pageCount = Math.ceil(total / PAGE_SIZE);
+  const page = resolvePage((await searchParams).page, pageCount);
+
   const projects = await prisma.project.findMany({
     orderBy: { order: "asc" },
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
   });
 
   return (
@@ -36,10 +43,17 @@ export default async function DashboardProjectsPage() {
         <ProjectsList
           projects={projects.map((p) => ({
             ...p,
-            statusLabel: statusLabel[p.status],
+            statusLabel: projectStatusLabel(p.status),
           }))}
         />
       </div>
+      <Pagination
+        page={page}
+        pageCount={pageCount}
+        basePath="/dashboard/projects"
+        total={total}
+        label="projet(s)"
+      />
     </div>
   );
 }

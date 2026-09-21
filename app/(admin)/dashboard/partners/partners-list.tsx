@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2 } from "lucide-react";
@@ -15,10 +16,11 @@ type Partner = {
 };
 
 export function PartnersList({ partners }: { partners: Partner[] }) {
+  const router = useRouter();
   async function deletePartner(id: string) {
     if (!confirm("Désactiver ce partenaire ? Il ne sera plus affiché sur le site.")) return;
     const res = await fetch(`/api/admin/partners/${id}`, { method: "DELETE" });
-    if (res.ok) window.location.reload();
+    if (res.ok) router.refresh();
   }
 
   return (

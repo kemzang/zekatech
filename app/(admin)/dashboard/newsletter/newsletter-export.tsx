@@ -1,25 +1,25 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
-export function NewsletterExport({ emails }: { emails: string[] }) {
-  function downloadCsv() {
-    const header = "email\n";
-    const rows = emails.join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `newsletter-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+/**
+ * L'export est généré côté serveur : la page n'affiche qu'une page d'abonnés,
+ * le CSV doit contenir la liste entière.
+ */
+export function NewsletterExport({ total }: { total: number }) {
+  if (total === 0) {
+    return (
+      <Button variant="outline" disabled>
+        <Download className="size-4" />
+        Exporter en CSV
+      </Button>
+    );
   }
-
   return (
-    <Button variant="outline" onClick={downloadCsv} disabled={emails.length === 0}>
-      <Download className="size-4" />
-      Exporter en CSV
+    <Button variant="outline" asChild>
+      <a href="/api/admin/newsletter?format=csv" download>
+        <Download className="size-4" />
+        Exporter en CSV
+      </a>
     </Button>
   );
 }

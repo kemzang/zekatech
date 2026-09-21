@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,11 +64,12 @@ export function ProjectCard({
             <div
               className={`relative w-full bg-muted ${hasVideo ? "aspect-video max-h-40" : "aspect-video"}`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={images[imageIndex]}
-                alt=""
-                className="h-full w-full object-cover"
+                alt={`${title} — visuel ${imageIndex + 1}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover"
               />
               {images.length > 1 && (
                 <>

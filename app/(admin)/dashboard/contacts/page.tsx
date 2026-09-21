@@ -1,12 +1,24 @@
 import { prisma } from "@/lib/prisma";
-
-export const dynamic = "force-dynamic";
-import { Card, CardContent } from "@/components/ui/card";
+import { Pagination, resolvePage } from "@/components/pagination";
 import { ContactsList } from "./contacts-list";
 
-export default async function DashboardContactsPage() {
+export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 20;
+
+export default async function DashboardContactsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const total = await prisma.contactRequest.count();
+  const pageCount = Math.ceil(total / PAGE_SIZE);
+  const page = resolvePage((await searchParams).page, pageCount);
+
   const contacts = await prisma.contactRequest.findMany({
     orderBy: { createdAt: "desc" },
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     include: {
       user: { select: { email: true, name: true } },
       service: { select: { name: true } },
@@ -29,6 +41,13 @@ export default async function DashboardContactsPage() {
           }))}
         />
       </div>
+      <Pagination
+        page={page}
+        pageCount={pageCount}
+        basePath="/dashboard/contacts"
+        total={total}
+        label="demande(s)"
+      />
     </div>
   );
 }

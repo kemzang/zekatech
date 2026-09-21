@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -119,12 +120,19 @@ export function ProjectImagePicker({
               key={item.id}
               className="relative aspect-video overflow-hidden rounded-md border border-border bg-muted"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={item.url}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              {item.saved ? (
+                <Image
+                  src={item.url}
+                  alt=""
+                  fill
+                  sizes="(max-width: 768px) 50vw, 200px"
+                  className="object-cover"
+                />
+              ) : (
+                // Aperçu local (blob:) : hors de portée de l'optimiseur d'images.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.url} alt="" className="h-full w-full object-cover" />
+              )}
               <Button
                 type="button"
                 variant="destructive"

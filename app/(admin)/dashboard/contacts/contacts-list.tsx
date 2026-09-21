@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
@@ -15,13 +17,14 @@ type Contact = {
 };
 
 export function ContactsList({ contacts }: { contacts: Contact[] }) {
+  const router = useRouter();
   async function markRead(id: string) {
     await fetch(`/api/admin/contacts/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ read: true }),
     });
-    window.location.reload();
+    router.refresh();
   }
 
   if (contacts.length === 0) {
