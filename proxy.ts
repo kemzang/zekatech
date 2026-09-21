@@ -1,8 +1,11 @@
 import { getToken } from "next-auth/jwt";
+import { assertEnv } from "@/lib/env";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
+assertEnv();
+
+export default async function proxy(req: NextRequest) {
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
