@@ -83,14 +83,14 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe (min. 8 caractères)</Label>
+              <Label htmlFor="password">Mot de passe (10 caractères min., lettres et chiffres)</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={10}
                 autoComplete="new-password"
                 className="bg-background border-border"
               />

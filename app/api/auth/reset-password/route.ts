@@ -2,41 +2,38 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
 import { z } from "zod";
-
-type PrismaWithReset = typeof prisma & {
-  passwordResetToken: {
-    findUnique: (args: { where: { token: string }; include: { user: true } }) => Promise<{
-      id: string;
-      userId: string;
-      expiresAt: Date;
-      user: { id: string };
-    } | null>;
-    delete: (args: { where: { id: string } }) => Promise<unknown>;
-  };
-};
+import { hashToken } from "@/lib/tokens";
+import { passwordSchema } from "@/lib/password";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 const schema = z.object({
   token: z.string().min(1),
-  password: z.string().min(8, "Au moins 8 caractères"),
+  password: passwordSchema,
 });
 
 export async function POST(req: Request) {
+  const limit = rateLimit(`reset:${clientIp(req)}`, 10, 15 * 60_000);
+  if (!limit.ok) return tooManyRequests(limit);
+
   try {
     const body = await req.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      const msg = parsed.error.flatten().fieldErrors.password?.[0] ?? "Données invalides.";
+      const msg =
+        parsed.error.flatten().fieldErrors.password?.[0] ?? "Données invalides.";
       return NextResponse.json({ error: msg }, { status: 400 });
     }
     const { token, password } = parsed.data;
 
-    const db = prisma as PrismaWithReset;
-    const reset = await db.passwordResetToken.findUnique({
-      where: { token },
-      include: { user: true },
+    // Le jeton n'existe en base que sous forme d'empreinte.
+    const reset = await prisma.passwordResetToken.findUnique({
+      where: { tokenHash: hashToken(token) },
     });
 
     if (!reset || reset.expiresAt < new Date()) {
+      if (reset) {
+        await prisma.passwordResetToken.delete({ where: { id: reset.id } });
+      }
       return NextResponse.json(
         { error: "Lien invalide ou expiré. Demandez un nouveau lien." },
         { status: 400 }
@@ -44,13 +41,13 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
+    await prisma.$transaction([
+      prisma.user.update({
         where: { id: reset.userId },
         data: { passwordHash },
-      });
-      await (tx as PrismaWithReset).passwordResetToken.delete({ where: { id: reset.id } });
-    });
+      }),
+      prisma.passwordResetToken.delete({ where: { id: reset.id } }),
+    ]);
 
     return NextResponse.json({ ok: true });
   } catch (e) {

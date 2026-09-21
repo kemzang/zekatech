@@ -4,13 +4,27 @@ import * as bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminPassword = await bcrypt.hash("admin123", 12);
+  // Jamais de mot de passe en dur : il vient de l'environnement. En dehors du
+  // developpement, l'absence de ADMIN_PASSWORD interrompt le seed.
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@zekatech.com").toLowerCase();
+  const rawPassword = process.env.ADMIN_PASSWORD;
+  if (!rawPassword && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ADMIN_PASSWORD doit être défini pour seeder un compte administrateur."
+    );
+  }
+  if (!rawPassword) {
+    console.warn(
+      "[seed] ADMIN_PASSWORD absent : mot de passe de développement 'change-me-1234' utilisé."
+    );
+  }
+  const adminPassword = await bcrypt.hash(rawPassword ?? "change-me-1234", 12);
 
   await prisma.user.upsert({
-    where: { email: "admin@zekatech.com" },
+    where: { email: adminEmail },
     update: {},
     create: {
-      email: "admin@zekatech.com",
+      email: adminEmail,
       passwordHash: adminPassword,
       name: "Admin ZekaTech",
       role: "ADMIN",

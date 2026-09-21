@@ -71,9 +71,10 @@ model VerificationToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  token     String   @unique
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  /// Empreinte SHA-256 du jeton : jamais la valeur en clair.
+  tokenHash String   @unique @map("token")
   expiresAt DateTime @map("expires_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

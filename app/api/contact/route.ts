@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/auth";
 import { z } from "zod";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   serviceId: z.string().min(1),
@@ -18,6 +19,9 @@ export async function POST(req: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
   }
+  const limit = rateLimit(`contact:${session.user.id}:${clientIp(req)}`, 5, 60 * 60_000);
+  if (!limit.ok) return tooManyRequests(limit);
+
   try {
     const body = await req.json();
     const parsed = bodySchema.safeParse(body);

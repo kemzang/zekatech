@@ -58,8 +58,14 @@ export function ProfileForm({ user }: { user: User }) {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setMessage("Le mot de passe doit contenir au moins 8 caractères");
+    if (
+      newPassword.length < 10 ||
+      !/[a-zA-Z]/.test(newPassword) ||
+      !/[0-9]/.test(newPassword)
+    ) {
+      setMessage(
+        "Le mot de passe doit contenir au moins 10 caractères, dont une lettre et un chiffre"
+      );
       setLoading(false);
       return;
     }
@@ -157,7 +163,7 @@ export function ProfileForm({ user }: { user: User }) {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={10}
               />
             </div>
             <div>
@@ -168,7 +174,7 @@ export function ProfileForm({ user }: { user: User }) {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={10}
               />
             </div>
             <Button type="submit" disabled={loading}>

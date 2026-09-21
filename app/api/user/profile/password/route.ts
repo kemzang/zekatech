@@ -3,8 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
+import { passwordSchema } from "@/lib/password";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export async function PUT(req: Request) {
+  const limit = rateLimit(`pwd-user:${clientIp(req)}`, 10, 15 * 60_000);
+  if (!limit.ok) return tooManyRequests(limit);
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -20,9 +25,10 @@ export async function PUT(req: Request) {
       );
     }
 
-    if (newPassword.length < 8) {
+    const policy = passwordSchema.safeParse(newPassword);
+    if (!policy.success) {
       return NextResponse.json(
-        { error: "Le mot de passe doit contenir au moins 8 caractères." },
+        { error: policy.error.issues[0]?.message ?? "Mot de passe invalide." },
         { status: 400 }
       );
     }
@@ -50,7 +56,13 @@ export async function PUT(req: Request) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+  } catch (e) {
+    // Une panne ne doit pas se deguiser en 401 : l'utilisateur croirait que
+    // sa session a expire.
+    console.error("[profil] changement de mot de passe", e);
+    return NextResponse.json(
+      { error: "Erreur lors du changement de mot de passe." },
+      { status: 500 }
+    );
   }
 }

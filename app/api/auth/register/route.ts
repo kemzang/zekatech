@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
 import { z } from "zod";
+import { passwordSchema } from "@/lib/password";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8, "Au moins 8 caractères"),
-  name: z.string().min(1).optional(),
+  email: z.email().max(200),
+  password: passwordSchema,
+  name: z.string().min(1).max(100).optional(),
 });
 
 export async function POST(req: Request) {
+  const limit = rateLimit(`register:${clientIp(req)}`, 5, 60 * 60_000);
+  if (!limit.ok) return tooManyRequests(limit);
+
   try {
     const body = await req.json();
     const parsed = registerSchema.safeParse(body);
@@ -19,8 +24,11 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { email, password, name } = parsed.data;
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const { password, name } = parsed.data;
+    const email = parsed.data.email.trim().toLowerCase();
+    const existing = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    });
     if (existing) {
       return NextResponse.json(
         { error: "Un compte existe déjà avec cet email." },
@@ -33,18 +41,11 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error(e);
-    const err = e as { code?: string; message?: string };
-    const isDbError =
-      err?.code === "P1001" ||
-      err?.message?.includes("credentials") ||
-      err?.message?.includes("Authentication failed");
+    // Le detail (DATABASE_URL, identifiants PostgreSQL...) reste dans les logs
+    // serveur : le client ne recoit qu'un message neutre.
+    console.error("[register]", e);
     return NextResponse.json(
-      {
-        error: isDbError
-          ? "Base de données indisponible. Vérifiez DATABASE_URL dans .env (utilisateur et mot de passe PostgreSQL)."
-          : "Erreur lors de l'inscription.",
-      },
+      { error: "Inscription momentanément indisponible. Réessayez plus tard." },
       { status: 503 }
     );
   }

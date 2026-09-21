@@ -3,6 +3,37 @@ import { requireAdmin } from "@/lib/auth";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+/** Controle de la signature binaire : le type MIME annonce vient du client. */
+function sniff(buf: Buffer): string | null {
+  if (buf.length < 12) return null;
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+  if (
+    buf
+      .subarray(0, 8)
+      .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  )
+    return "image/png";
+  if (buf.subarray(0, 6).toString("latin1").startsWith("GIF8")) return "image/gif";
+  if (
+    buf.subarray(0, 4).toString("latin1") === "RIFF" &&
+    buf.subarray(8, 12).toString("latin1") === "WEBP"
+  )
+    return "image/webp";
+  if (buf.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])))
+    return "video/webm";
+  if (buf.subarray(4, 8).toString("latin1") === "ftyp") {
+    const brand = buf.subarray(8, 12).toString("latin1");
+    return brand.startsWith("qt") ? "video/quicktime" : "video/mp4";
+  }
+  return null;
+}
+
+async function assertRealType(file: File, allowed: string[]) {
+  const buf = Buffer.from(await file.arrayBuffer());
+  const detected = sniff(buf);
+  return detected !== null && allowed.includes(detected);
+}
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
@@ -33,12 +64,24 @@ export async function POST(req: Request) {
         );
       }
 
+      if (!(await assertRealType(videoFile, ALLOWED_VIDEO_TYPES))) {
+        return NextResponse.json(
+          { error: "Le contenu du fichier ne correspond pas à une vidéo." },
+          { status: 400 }
+        );
+      }
       const url = await uploadToCloudinary(videoFile, "zekatech/projects/videos", "video");
       return NextResponse.json({ url });
     }
 
     // Upload images
     const fileArray = files.filter((f): f is File => f instanceof File && f.size > 0);
+    if (fileArray.length > 20) {
+      return NextResponse.json(
+        { error: "20 images maximum par envoi." },
+        { status: 400 }
+      );
+    }
     if (!fileArray.length) {
       return NextResponse.json(
         { error: "Aucun fichier image envoyé. Choisissez une ou plusieurs images sur votre PC." },
@@ -61,6 +104,12 @@ export async function POST(req: Request) {
         );
       }
 
+      if (!(await assertRealType(file, ALLOWED_IMAGE_TYPES))) {
+        return NextResponse.json(
+          { error: `Le contenu de ${file.name} ne correspond pas à une image.` },
+          { status: 400 }
+        );
+      }
       const url = await uploadToCloudinary(file, "zekatech/projects/images", "image");
       urls.push(url);
     }

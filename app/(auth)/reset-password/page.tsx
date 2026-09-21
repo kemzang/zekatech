@@ -33,7 +33,7 @@ function ResetPasswordForm() {
       return;
     }
     if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
+      setError("Le mot de passe doit contenir 10 caractères minimum, avec au moins une lettre et un chiffre.");
       return;
     }
     if (!token.trim()) {
@@ -86,7 +86,7 @@ function ResetPasswordForm() {
         <CardHeader>
           <CardTitle>Nouveau mot de passe</CardTitle>
           <CardDescription>
-            Choisissez un nouveau mot de passe (au moins 8 caractères).
+            Choisissez un nouveau mot de passe (10 caractères minimum, avec au moins une lettre et un chiffre).
           </CardDescription>
         </CardHeader>
         <form onSubmit={onSubmit}>
@@ -117,7 +117,7 @@ function ResetPasswordForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={10}
                 autoComplete="new-password"
                 className="bg-background border-border"
               />
@@ -130,7 +130,7 @@ function ResetPasswordForm() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
-                minLength={8}
+                minLength={10}
                 autoComplete="new-password"
                 className="bg-background border-border"
               />

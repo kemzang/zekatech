@@ -2,8 +2,12 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
+import { rateLimit } from "@/lib/rate-limit";
 
 type AppRole = "USER" | "ADMIN";
+
+// Hash jetable utilise pour egaliser le temps de reponse d'un login rate.
+const DUMMY_HASH = "$2a$12$K9Xh8zj6oQWzv5g7mJpQ6uJ1nYxUQ0r0vJ3qC1yKl8sB5mFzN2W9C";
 
 declare module "next-auth" {
   interface User {
@@ -39,11 +43,25 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+        const email = String(credentials.email).trim();
+        // Anti-force brute : 10 tentatives par compte et par quart d'heure.
+        if (!rateLimit(`login:${email.toLowerCase()}`, 10, 15 * 60_000).ok) {
+          throw new Error("Trop de tentatives. Réessayez dans quelques minutes.");
+        }
         try {
-          const user = await prisma.user.findUnique({
-            where: { email: String(credentials.email) },
-          });
-          if (!user) return null;
+          // Les comptes crees avant la normalisation peuvent contenir des
+          // majuscules : on retente donc sans tenir compte de la casse.
+          const user =
+            (await prisma.user.findUnique({ where: { email } })) ??
+            (await prisma.user.findFirst({
+              where: { email: { equals: email, mode: "insensitive" } },
+            }));
+          if (!user) {
+            // Cout constant : evite de distinguer "email inconnu" de
+            // "mot de passe faux" par le temps de reponse.
+            await bcrypt.compare(String(credentials.password), DUMMY_HASH);
+            return null;
+          }
           const ok = await bcrypt.compare(
             String(credentials.password),
             user.passwordHash
