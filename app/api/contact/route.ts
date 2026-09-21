@@ -6,8 +6,11 @@ import { z } from "zod";
 
 const bodySchema = z.object({
   serviceId: z.string().min(1),
-  subject: z.string().optional(),
-  message: z.string().min(1, "Message requis"),
+  subject: z.string().max(200).optional(),
+  message: z
+    .string()
+    .min(1, "Message requis")
+    .max(5000, "Message trop long (5000 caractères max)"),
 });
 
 export async function POST(req: Request) {
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
     const service = await prisma.service.findUnique({
       where: { id: serviceId },
     });
-    if (!service) {
+    if (!service || !service.active) {
       return NextResponse.json(
         { error: "Service invalide." },
         { status: 400 }
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
       data: {
         userId: session.user.id,
         serviceId,
-        subject: subject ?? null,
+        subject: subject || null,
         message,
       },
     });

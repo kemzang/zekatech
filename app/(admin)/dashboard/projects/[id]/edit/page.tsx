@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { parseImageUrls } from "@/lib/project-images";
 import { ProjectImagePicker } from "@/components/project-image-picker";
 import { ProjectVideoPicker } from "@/components/project-video-picker";
 
@@ -65,12 +66,7 @@ export default function EditProjectPage() {
           setSlug(data.slug);
           setDescription(data.description ?? "");
           setStatus(data.status);
-          const urls = data.imageUrls
-            ? (typeof data.imageUrls === "string" ? JSON.parse(data.imageUrls) : data.imageUrls)
-            : data.imageUrl
-              ? [data.imageUrl]
-              : [];
-          setImageUrls(Array.isArray(urls) ? urls : []);
+          setImageUrls(parseImageUrls(data.imageUrls, data.imageUrl));
           setVideoUrl(data.videoUrl ?? "");
           setLink(data.link ?? "");
           setActive(data.active !== false);
@@ -88,11 +84,11 @@ export default function EditProjectPage() {
       body: JSON.stringify({
         title,
         slug,
-        description: description || undefined,
+        description,
         status,
-        imageUrls: imageUrls.length ? imageUrls : undefined,
-        videoUrl: videoUrl || undefined,
-        link: link || undefined,
+        imageUrls,
+        videoUrl,
+        link,
         active,
       }),
     });

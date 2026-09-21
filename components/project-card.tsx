@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { parseImageUrls } from "@/lib/project-images";
 
 type ProjectCardProps = {
   title: string;
@@ -22,18 +23,6 @@ type ProjectCardProps = {
   imageUrls: string | null;
 };
 
-function parseImages(imageUrls: string | null, imageUrl: string | null): string[] {
-  if (!imageUrls && !imageUrl) return [];
-  const parsed = imageUrls
-    ? typeof imageUrls === "string"
-      ? (JSON.parse(imageUrls) as string[])
-      : (imageUrls as string[])
-    : [];
-  if (Array.isArray(parsed) && parsed.length) return parsed;
-  if (imageUrl) return [imageUrl];
-  return [];
-}
-
 export function ProjectCard({
   title,
   description,
@@ -44,7 +33,7 @@ export function ProjectCard({
   imageUrl,
   imageUrls,
 }: ProjectCardProps) {
-  const images = parseImages(imageUrls, imageUrl);
+  const images = parseImageUrls(imageUrls, imageUrl);
   const [imageIndex, setImageIndex] = useState(0);
   const hasVideo = !!videoUrl;
   const hasImages = images.length > 0;

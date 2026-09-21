@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
 
 export async function GET() {
   try {
@@ -53,10 +54,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json(service);
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la création." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la création.");
   }
 }

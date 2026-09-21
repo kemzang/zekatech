@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
 import { z } from "zod";
 
 const updateSchema = z.object({
-  name: z.string().min(1).optional(),
-  logoUrl: z.string().url().optional().or(z.literal("")),
-  link: z.string().url().optional().or(z.literal("")),
+  name: z.string().min(1).max(200).optional(),
+  logoUrl: z.union([z.url(), z.literal("")]).optional(),
+  link: z.union([z.url(), z.literal("")]).optional(),
   order: z.number().int().optional(),
   active: z.boolean().optional(),
 });
@@ -39,30 +40,21 @@ export async function PATCH(
   try {
     const body = await req.json();
     const parsed = updateSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Données invalides." },
-        { status: 400 }
-      );
-    }
+    if (!parsed.success) return invalidPayload(parsed.error);
     const data = parsed.data;
     const partner = await prisma.partner.update({
       where: { id },
       data: {
-        ...(data.name != null && { name: data.name }),
+        ...(data.name !== undefined && { name: data.name }),
         ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl || null }),
         ...(data.link !== undefined && { link: data.link || null }),
-        ...(data.order != null && { order: data.order }),
+        ...(data.order !== undefined && { order: data.order }),
         ...(data.active !== undefined && { active: data.active }),
       },
     });
     return NextResponse.json(partner);
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la mise à jour." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la mise à jour.");
   }
 }
 
@@ -83,10 +75,6 @@ export async function DELETE(
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la désactivation." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la désactivation.");
   }
 }

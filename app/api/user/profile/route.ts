@@ -2,26 +2,31 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
+import { z } from "zod";
+
+const updateSchema = z.object({
+  name: z.string().min(1, "Le nom est requis").max(100),
+});
 
 export async function PUT(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+  }
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
-    }
+    const body = await req.json().catch(() => ({}));
+    // Le corps n'etait pas valide du tout : `name` pouvait etre de n'importe
+    // quel type et de n'importe quelle longueur.
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) return invalidPayload(parsed.error);
 
-    const { name } = await req.json();
-
-    const updatedUser = await prisma.user.update({
+    const updated = await prisma.user.update({
       where: { email: session.user.email },
-      data: { name },
+      data: { name: parsed.data.name },
     });
-
-    console.log("✅ Profil mis à jour:", updatedUser.name);
-
-    return NextResponse.json({ ok: true, name: updatedUser.name });
-  } catch (error) {
-    console.error("❌ Erreur mise à jour profil:", error);
-    return NextResponse.json({ error: "Erreur lors de la mise à jour." }, { status: 500 });
+    return NextResponse.json({ ok: true, name: updated.name });
+  } catch (e) {
+    return prismaError(e, "Erreur lors de la mise à jour.");
   }
 }

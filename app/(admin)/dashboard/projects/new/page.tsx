@@ -57,12 +57,12 @@ export default function NewProjectPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
-        slug: slug || undefined,
-        description: description || undefined,
+        slug,
+        description,
         status,
-        imageUrls: imageUrls.length ? imageUrls : undefined,
-        videoUrl: videoUrl || undefined,
-        link: link || undefined,
+        imageUrls,
+        videoUrl,
+        link,
       }),
     });
     const data = await res.json().catch(() => ({}));

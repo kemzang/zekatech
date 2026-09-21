@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
+import { serializeImageUrls } from "@/lib/project-images";
 import { z } from "zod";
 import { ProjectStatus } from "@prisma/client";
 
 const createSchema = z.object({
-  title: z.string().min(1),
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
-  description: z.string().optional(),
-  status: z.nativeEnum(ProjectStatus),
-  imageUrl: z.string().url().optional().or(z.literal("")),
-  imageUrls: z.array(z.string().min(1)).optional(),
-  videoUrl: z.string().min(1).optional().or(z.literal("")),
-  link: z.string().url().optional().or(z.literal("")),
+  title: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/, "minuscules, chiffres et tirets uniquement"),
+  description: z.string().max(5000).optional(),
+  status: z.enum(ProjectStatus),
+  imageUrl: z.string().optional(),
+  imageUrls: z.array(z.string().min(1)).max(20).optional(),
+  videoUrl: z.string().optional(),
+  link: z.union([z.url(), z.literal("")]).optional(),
   order: z.number().int().optional(),
 });
 
@@ -37,12 +39,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const parsed = createSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Données invalides." },
-        { status: 400 }
-      );
-    }
+    if (!parsed.success) return invalidPayload(parsed.error);
     const data = parsed.data;
     const project = await prisma.project.create({
       data: {
@@ -51,7 +48,7 @@ export async function POST(req: Request) {
         description: data.description ?? null,
         status: data.status,
         imageUrl: data.imageUrl || (data.imageUrls?.[0] ?? null),
-        imageUrls: data.imageUrls?.length ? JSON.stringify(data.imageUrls) : null,
+        imageUrls: serializeImageUrls(data.imageUrls ?? []),
         videoUrl: data.videoUrl || null,
         link: data.link || null,
         order: data.order ?? 0,
@@ -59,10 +56,6 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(project);
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la création." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la création.");
   }
 }

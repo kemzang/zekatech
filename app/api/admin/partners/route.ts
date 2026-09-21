@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
 import { z } from "zod";
 
 const createSchema = z.object({
-  name: z.string().min(1),
-  logoUrl: z.string().url().optional().or(z.literal("")),
-  link: z.string().url().optional().or(z.literal("")),
+  name: z.string().min(1).max(200),
+  logoUrl: z.union([z.url(), z.literal("")]).optional(),
+  link: z.union([z.url(), z.literal("")]).optional(),
   order: z.number().int().optional(),
 });
 
@@ -31,12 +32,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const parsed = createSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Données invalides." },
-        { status: 400 }
-      );
-    }
+    if (!parsed.success) return invalidPayload(parsed.error);
     const data = parsed.data;
     const partner = await prisma.partner.create({
       data: {
@@ -48,10 +44,6 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(partner);
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la création." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la création.");
   }
 }

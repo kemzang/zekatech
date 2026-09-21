@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
 import { z } from "zod";
 
 const updateSchema = z.object({
-  name: z.string().min(1).optional(),
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/).optional(),
-  description: z.string().optional().nullable(),
-  icon: z.string().optional().nullable(),
+  name: z.string().min(1).max(200).optional(),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/, "minuscules, chiffres et tirets uniquement").optional(),
+  description: z.string().max(5000).optional().nullable(),
+  icon: z.string().max(100).optional().nullable(),
   order: z.number().int().optional(),
   active: z.boolean().optional(),
 });
@@ -40,31 +41,22 @@ export async function PATCH(
   try {
     const body = await req.json();
     const parsed = updateSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Données invalides." },
-        { status: 400 }
-      );
-    }
+    if (!parsed.success) return invalidPayload(parsed.error);
     const data = parsed.data;
     const service = await prisma.service.update({
       where: { id },
       data: {
-        ...(data.name != null && { name: data.name }),
-        ...(data.slug != null && { slug: data.slug }),
-        ...(data.description !== undefined && { description: data.description ?? null }),
-        ...(data.icon !== undefined && { icon: data.icon ?? null }),
-        ...(data.order != null && { order: data.order }),
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.slug !== undefined && { slug: data.slug }),
+        ...(data.description !== undefined && { description: data.description || null }),
+        ...(data.icon !== undefined && { icon: data.icon || null }),
+        ...(data.order !== undefined && { order: data.order }),
         ...(data.active !== undefined && { active: data.active }),
       },
     });
     return NextResponse.json(service);
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la mise à jour." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la mise à jour.");
   }
 }
 
@@ -92,10 +84,6 @@ export async function DELETE(
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la désactivation." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la désactivation.");
   }
 }

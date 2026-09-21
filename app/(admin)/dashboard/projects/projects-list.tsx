@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2 } from "lucide-react";
+import { parseImageUrls } from "@/lib/project-images";
 
 type Project = {
   id: string;
@@ -11,6 +12,7 @@ type Project = {
   slug: string;
   status: string;
   statusLabel: string;
+  imageUrl?: string | null;
   imageUrls?: string | null;
   active?: boolean;
 };
@@ -36,8 +38,7 @@ export function ProjectsList({
             <CardContent className="flex items-center justify-between gap-3 p-4">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 {(() => {
-                  const urls = p.imageUrls ? (typeof p.imageUrls === "string" ? JSON.parse(p.imageUrls) : p.imageUrls) : [];
-                  const first = Array.isArray(urls) ? urls[0] : null;
+                  const first = parseImageUrls(p.imageUrls, p.imageUrl)[0] ?? null;
                   return first ? (
                     <div className="size-12 shrink-0 overflow-hidden rounded border border-border bg-muted">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,22 +1,33 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
+import { z } from "zod";
+
+const updateSchema = z.object({
+  name: z.string().min(1, "Le nom est requis").max(100),
+});
 
 export async function PUT(req: Request) {
+  // Hors du try : sinon un refus d'autorisation ressortait en 500.
+  let email: string;
   try {
     const session = await requireAdmin();
-    const { name } = await req.json();
+    email = session.user.email!;
+  } catch {
+    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+  }
+  try {
+    const body = await req.json().catch(() => ({}));
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) return invalidPayload(parsed.error);
 
-    const updatedUser = await prisma.user.update({
-      where: { email: session.user.email! },
-      data: { name },
+    const updated = await prisma.user.update({
+      where: { email },
+      data: { name: parsed.data.name },
     });
-
-    console.log("✅ Profil admin mis à jour:", updatedUser.name);
-
-    return NextResponse.json({ ok: true, name: updatedUser.name });
-  } catch (error) {
-    console.error("❌ Erreur mise à jour profil admin:", error);
-    return NextResponse.json({ error: "Erreur lors de la mise à jour." }, { status: 500 });
+    return NextResponse.json({ ok: true, name: updated.name });
+  } catch (e) {
+    return prismaError(e, "Erreur lors de la mise à jour.");
   }
 }

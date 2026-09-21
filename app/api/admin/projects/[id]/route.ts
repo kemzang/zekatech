@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { invalidPayload, prismaError } from "@/lib/api-errors";
+import { serializeImageUrls } from "@/lib/project-images";
 import { z } from "zod";
 import { ProjectStatus } from "@prisma/client";
 
 const updateSchema = z.object({
-  title: z.string().min(1).optional(),
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/).optional(),
-  description: z.string().optional(),
-  status: z.nativeEnum(ProjectStatus).optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
-  imageUrls: z.array(z.string().min(1)).optional(),
-  videoUrl: z.string().min(1).optional().or(z.literal("")),
-  link: z.string().url().optional().or(z.literal("")),
+  title: z.string().min(1).max(200).optional(),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/, "minuscules, chiffres et tirets uniquement").optional(),
+  description: z.string().max(5000).optional(),
+  status: z.enum(ProjectStatus).optional(),
+  imageUrl: z.string().optional(),
+  imageUrls: z.array(z.string().min(1)).max(20).optional(),
+  videoUrl: z.string().optional(),
+  link: z.union([z.url(), z.literal("")]).optional(),
   order: z.number().int().optional(),
   active: z.boolean().optional(),
 });
@@ -45,40 +47,34 @@ export async function PATCH(
   try {
     const body = await req.json();
     const parsed = updateSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Données invalides." },
-        { status: 400 }
-      );
-    }
+    if (!parsed.success) return invalidPayload(parsed.error);
     const data = parsed.data;
     const project = await prisma.project.update({
       where: { id },
+      // Une chaîne vide / un tableau vide est un effacement volontaire :
+      // seul `undefined` (champ absent) laisse la valeur inchangée.
       data: {
-        ...(data.title != null && { title: data.title }),
-        ...(data.slug != null && { slug: data.slug }),
-        ...(data.description != null && { description: data.description }),
-        ...(data.status != null && { status: data.status }),
-        ...(data.imageUrl !== undefined && {
-          imageUrl: data.imageUrl || null,
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.slug !== undefined && { slug: data.slug }),
+        ...(data.description !== undefined && {
+          description: data.description || null,
         }),
+        ...(data.status !== undefined && { status: data.status }),
         ...(data.imageUrls !== undefined && {
-          imageUrls: data.imageUrls?.length ? JSON.stringify(data.imageUrls) : null,
-          ...(data.imageUrls?.length && { imageUrl: data.imageUrls[0] }),
+          imageUrls: serializeImageUrls(data.imageUrls),
+          imageUrl: data.imageUrls[0] ?? null,
         }),
+        ...(data.imageUrls === undefined &&
+          data.imageUrl !== undefined && { imageUrl: data.imageUrl || null }),
         ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl || null }),
         ...(data.link !== undefined && { link: data.link || null }),
-        ...(data.order != null && { order: data.order }),
+        ...(data.order !== undefined && { order: data.order }),
         ...(data.active !== undefined && { active: data.active }),
       },
     });
     return NextResponse.json(project);
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la mise à jour." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la mise à jour.");
   }
 }
 
@@ -99,10 +95,6 @@ export async function DELETE(
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Erreur lors de la désactivation." },
-      { status: 500 }
-    );
+    return prismaError(e, "Erreur lors de la désactivation.");
   }
 }
