@@ -5,7 +5,10 @@ $zeka-bg: #0b0f14;
 $zeka-surface: #131a22;
 $zeka-surface-elevated: #1a2433;
 $zeka-border: #243044;
-$zeka-muted: #64748b;
+// Fond neutre (placeholders, pastilles) : doit rester sombre
+$zeka-muted: #1e2836;
+// Texte secondaire : >= 4.5:1 sur $zeka-bg (WCAG AA)
+$zeka-muted-foreground: #94a3b8;
 $zeka-foreground: #e2e8f0;
 $zeka-foreground-strong: #f8fafc;
 
