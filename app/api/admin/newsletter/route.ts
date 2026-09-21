@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { withAdmin } from "@/lib/auth";
 
 /** Neutralise l'injection de formules dans Excel/LibreOffice. */
 function csvCell(value: string) {
@@ -8,13 +8,7 @@ function csvCell(value: string) {
   return `"${escaped.replace(/"/g, '""')}"`;
 }
 
-export async function GET(req: Request) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
-  }
-
+export const GET = withAdmin(async (req: Request) => {
   const list = await prisma.newsletterSubscriber.findMany({
     where: { active: true },
     orderBy: { createdAt: "desc" },
@@ -25,7 +19,7 @@ export async function GET(req: Request) {
     const rows = [
       "email,inscrit_le",
       ...list.map(
-        (s) => `${csvCell(s.email)},${csvCell(s.createdAt.toISOString())}`
+        (s) => `${csvCell(s.email)},${csvCell(s.createdAt.toISOString())}`,
       ),
     ].join("\n");
     const date = new Date().toISOString().slice(0, 10);
@@ -38,4 +32,4 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json(list);
-}
+});

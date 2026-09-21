@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { withAdmin } from "@/lib/auth";
 import { invalidPayload, prismaError } from "@/lib/api-errors";
 import { serializeImageUrls } from "@/lib/project-images";
 import { z } from "zod";
@@ -9,7 +9,11 @@ import { ProjectStatus } from "@prisma/client";
 
 const createSchema = z.object({
   title: z.string().min(1).max(200),
-  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/, "minuscules, chiffres et tirets uniquement"),
+  slug: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[a-z0-9-]+$/, "minuscules, chiffres et tirets uniquement"),
   description: z.string().max(5000).optional(),
   status: z.enum(ProjectStatus),
   imageUrl: z.string().optional(),
@@ -19,24 +23,14 @@ const createSchema = z.object({
   order: z.number().int().optional(),
 });
 
-export async function GET() {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
-  }
+export const GET = withAdmin(async () => {
   const projects = await prisma.project.findMany({
     orderBy: { order: "asc" },
   });
   return NextResponse.json(projects);
-}
+});
 
-export async function POST(req: Request) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
-  }
+export const POST = withAdmin(async (req: Request) => {
   try {
     const body = await req.json();
     const parsed = createSchema.safeParse(body);
@@ -57,8 +51,8 @@ export async function POST(req: Request) {
     });
     revalidatePath("/");
     revalidatePath("/projects");
-return NextResponse.json(project);
+    return NextResponse.json(project);
   } catch (e) {
     return prismaError(e, "Erreur lors de la création.");
   }
-}
+});

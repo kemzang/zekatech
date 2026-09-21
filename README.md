@@ -53,3 +53,29 @@ Ouvrir [http://localhost:3000](http://localhost:3000).
 - **Front** : Next.js 16 (App Router), React 19, Tailwind v4, SCSS, shadcn/ui
 - **Back** : Route Handlers Next.js, Prisma, PostgreSQL
 - **Auth** : NextAuth v4 (Credentials), JWT
+
+## Qualité
+
+```bash
+npm run lint && npm run typecheck && npm test && npm run build
+```
+
+Ces quatre commandes sont rejouées par la CI GitHub Actions
+([.github/workflows/ci.yml](.github/workflows/ci.yml)) sur `main` et sur chaque
+pull request. Les conventions de code sont décrites dans [CLAUDE.md](CLAUDE.md).
+
+## Points d'attention
+
+**Rate limiting.** Les compteurs de [`lib/rate-limit.ts`](lib/rate-limit.ts)
+vivent en mémoire du process. Sur Vercel, chaque instance serverless a sa propre
+mémoire : la protection est donc partielle. Pour un vrai plafond global,
+remplacer le store par Redis/Upstash — l'interface ne change pas.
+
+**Build et base de données.** Les pages publiques sont prérendues puis
+revalidées toutes les 5 minutes (et immédiatement à chaque modification depuis
+le back-office). `DATABASE_URL` doit donc être accessible **pendant le build**.
+
+**`Project.imageUrls`.** La colonne stocke un tableau JSON sérialisé (type
+`Text`) plutôt qu'un `String[]` PostgreSQL natif, pour rester compatible avec
+les données déjà en base. Toute lecture passe par
+[`lib/project-images.ts`](lib/project-images.ts).

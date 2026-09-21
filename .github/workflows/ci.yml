@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Le postinstall du package.json génère le client Prisma.
+      - run: npm ci
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+      - run: npm run build
+        env:
+          # Le build prérend les pages publiques : sans base joignable elles
+          # sont rendues vides, ce qui reste acceptable pour une vérification.
+          DATABASE_URL: postgresql://user:pass@localhost:5432/zekatech
+          NEXTAUTH_SECRET: ci-secret-not-used-at-runtime
+          NEXTAUTH_URL: http://localhost:3000

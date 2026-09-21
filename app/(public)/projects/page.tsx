@@ -26,9 +26,8 @@ export default async function ProjectsPage() {
   let projects: ProjectRow[] = [];
   let unavailable = false;
   try {
-    type FindManyOptions = NonNullable<Parameters<typeof prisma.project.findMany>[0]>;
     projects = (await prisma.project.findMany({
-      where: { active: true } as FindManyOptions["where"],
+      where: { active: true },
       orderBy: { order: "asc" },
     })) as ProjectRow[];
   } catch (e) {

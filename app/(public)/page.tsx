@@ -175,9 +175,9 @@ export default async function HomePage() {
                 status={p.status}
                 statusLabel={projectStatusLabel[p.status] ?? p.status}
                 link={p.link}
-                videoUrl={(p as { videoUrl?: string | null }).videoUrl ?? null}
+                videoUrl={p.videoUrl}
                 imageUrl={p.imageUrl}
-                imageUrls={(p as { imageUrls?: string | null }).imageUrls ?? null}
+                imageUrls={p.imageUrls}
               />
             ))}
           </div>
