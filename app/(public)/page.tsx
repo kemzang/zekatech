@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { DataUnavailable } from "@/components/data-unavailable";
+import { siteDescription, siteName, siteUrl } from "@/lib/site";
 
 // Rendu statique regenere toutes les 5 minutes, plus revalidation
 // immediate declenchee par les mutations du back-office.
@@ -27,14 +29,16 @@ export default async function HomePage() {
   let services: Awaited<ReturnType<typeof prisma.service.findMany>> = [];
   let projects: Awaited<ReturnType<typeof prisma.project.findMany>> = [];
   let partners: Awaited<ReturnType<typeof prisma.partner.findMany>> = [];
+  let unavailable = false;
   try {
     [services, projects, partners] = await Promise.all([
       prisma.service.findMany({ where: { active: true }, orderBy: { order: "asc" }, take: 4 }),
       prisma.project.findMany({ where: { active: true }, orderBy: { order: "asc" }, take: 3 }),
       prisma.partner.findMany({ where: { active: true }, orderBy: { order: "asc" }, take: 6 }),
     ]);
-  } catch {
-    // Base de données indisponible (ex. PostgreSQL non démarré)
+  } catch (e) {
+    console.error("[accueil] base de données indisponible", e);
+    unavailable = true;
   }
   type ServiceItem = (typeof services)[number];
   type ProjectItem = (typeof projects)[number];
@@ -45,8 +49,20 @@ export default async function HomePage() {
     AUTRE: "Autre",
   };
 
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteName,
+    url: siteUrl,
+    description: siteDescription,
+  };
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
       {/* Hero avec image background professionnelle */}
       <section className="relative overflow-hidden">
         {/* Image de fond avec overlay */}
@@ -104,6 +120,12 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {unavailable && (
+        <div className="container mx-auto px-4">
+          <DataUnavailable what="Les contenus du site sont" />
+        </div>
+      )}
+
       {/* Services preview */}
       <section className="border-t border-border bg-surface py-16">
         <div className="container mx-auto px-4">
@@ -147,6 +169,7 @@ export default async function HomePage() {
             {projects.map((p: ProjectItem) => (
               <ProjectCard
                 key={p.id}
+                slug={p.slug}
                 title={p.title}
                 description={p.description}
                 status={p.status}

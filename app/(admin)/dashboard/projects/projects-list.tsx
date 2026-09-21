@@ -3,9 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import { parseImageUrls } from "@/lib/project-images";
 
 type Project = {
@@ -25,14 +28,34 @@ export function ProjectsList({
   projects: Project[];
 }) {
   const router = useRouter();
-  async function deleteProject(id: string) {
-    if (!confirm("Désactiver ce projet ? Il ne sera plus affiché sur le site.")) return;
+  const { toast } = useToast();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    const id = pendingId;
+    setPendingId(null);
+    if (!id) return;
     const res = await fetch(`/api/admin/projects/${id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      toast("Projet désactivé.");
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast(data.error || "La désactivation a échoué.", "error");
+    }
   }
 
   return (
-    <div className="space-y-2">
+    <>
+      <ConfirmDialog
+        open={pendingId !== null}
+        title="Désactiver ce projet ?"
+        description="Il ne sera plus affiché sur le site. Vous pourrez le réactiver depuis sa page d'édition."
+        confirmLabel="Désactiver"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingId(null)}
+      />
+      <div className="space-y-2">
       {projects.length === 0 ? (
         <p className="text-muted-foreground">Aucun projet.</p>
       ) : (
@@ -78,7 +101,7 @@ export function ProjectsList({
                   variant="ghost"
                   size="icon"
                   className="text-destructive"
-                  onClick={() => deleteProject(p.id)}
+                  onClick={() => setPendingId(p.id)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -87,6 +110,7 @@ export function ProjectsList({
           </Card>
         ))
       )}
-    </div>
+      </div>
+    </>
   );
 }

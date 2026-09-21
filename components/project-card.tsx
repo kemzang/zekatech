@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { parseImageUrls } from "@/lib/project-images";
 
 type ProjectCardProps = {
+  slug: string;
   title: string;
   description: string | null;
   status: string;
@@ -25,6 +27,7 @@ type ProjectCardProps = {
 };
 
 export function ProjectCard({
+  slug,
   title,
   description,
   status,
@@ -114,7 +117,14 @@ export function ProjectCard({
       )}
       <CardHeader className="flex-1">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardTitle className="text-lg">
+            <Link
+              href={`/projects/${slug}`}
+              className="transition-colors hover:text-primary"
+            >
+              {title}
+            </Link>
+          </CardTitle>
           <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">
             {statusLabel}
           </span>
@@ -124,6 +134,9 @@ export function ProjectCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/projects/${slug}`}>Voir le détail</Link>
+        </Button>
         {link && (
           <Button variant="outline" size="sm" asChild>
             <a href={link} target="_blank" rel="noopener noreferrer">

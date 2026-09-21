@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { DataUnavailable } from "@/components/data-unavailable";
 
 // Rendu statique regenere toutes les 5 minutes, plus revalidation
 // immediate declenchee par les mutations du back-office.
@@ -6,7 +7,7 @@ export const revalidate = 300;
 import { ProjectCard } from "@/components/project-card";
 
 export const metadata = {
-  title: "Projets | ZekaTech",
+  title: "Projets",
   description: "Projets réalisés et en cours.",
 };
 
@@ -23,14 +24,16 @@ type ProjectRow = Awaited<ReturnType<typeof prisma.project.findMany>>[number] & 
 
 export default async function ProjectsPage() {
   let projects: ProjectRow[] = [];
+  let unavailable = false;
   try {
     type FindManyOptions = NonNullable<Parameters<typeof prisma.project.findMany>[0]>;
     projects = (await prisma.project.findMany({
       where: { active: true } as FindManyOptions["where"],
       orderBy: { order: "asc" },
     })) as ProjectRow[];
-  } catch {
-    // Base de données indisponible
+  } catch (e) {
+    console.error("[projects] base de données indisponible", e);
+    unavailable = true;
   }
 
   return (
@@ -65,6 +68,7 @@ export default async function ProjectsPage() {
             {projects.map((p) => (
               <ProjectCard
                 key={p.id}
+                slug={p.slug}
                 title={p.title}
                 description={p.description}
                 status={p.status}
@@ -76,11 +80,15 @@ export default async function ProjectsPage() {
               />
             ))}
           </div>
-          {projects.length === 0 && (
-            <p className="mt-8 text-center text-muted-foreground">
-              Aucun projet pour le moment.
-            </p>
-          )}
+          {unavailable ? (
+        <DataUnavailable what="Les projets sont" />
+      ) : (
+        projects.length === 0 && (
+          <p className="mt-8 text-center text-muted-foreground">
+            Aucun projet pour le moment.
+          </p>
+        )
+      )}
         </div>
       </section>
     </div>

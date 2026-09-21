@@ -1,23 +1,26 @@
 import { prisma } from "@/lib/prisma";
+import { DataUnavailable } from "@/components/data-unavailable";
 
 // Rendu statique regenere toutes les 5 minutes, plus revalidation
 // immediate declenchee par les mutations du back-office.
 export const revalidate = 300;
 
 export const metadata = {
-  title: "Partenaires | ZekaTech",
+  title: "Partenaires",
   description: "Partenaires et clients.",
 };
 
 export default async function PartnersPage() {
   let partners: Awaited<ReturnType<typeof prisma.partner.findMany>> = [];
+  let unavailable = false;
   try {
     partners = await prisma.partner.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
     });
-  } catch {
-    // Base de données indisponible
+  } catch (e) {
+    console.error("[partners] base de données indisponible", e);
+    unavailable = true;
   }
 
   return (
@@ -72,11 +75,15 @@ export default async function PartnersPage() {
               </a>
             ))}
           </div>
-          {partners.length === 0 && (
-            <p className="mt-8 text-center text-muted-foreground">
-              Aucun partenaire pour le moment.
-            </p>
-          )}
+          {unavailable ? (
+        <DataUnavailable what="Les partenaires sont" />
+      ) : (
+        partners.length === 0 && (
+          <p className="mt-8 text-center text-muted-foreground">
+            Aucun partenaire pour le moment.
+          </p>
+        )
+      )}
         </div>
       </section>
     </div>

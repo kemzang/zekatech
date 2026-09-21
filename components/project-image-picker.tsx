@@ -5,6 +5,7 @@ import { useRef, useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 type ProjectImagePickerProps = {
   value: string[];
@@ -19,6 +20,7 @@ export function ProjectImagePicker({
   disabled,
   label = "Images du projet",
 }: ProjectImagePickerProps) {
+  const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewFiles, setPreviewFiles] = useState<{ id: string; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -45,7 +47,7 @@ export function ProjectImagePicker({
 
     const imageFiles = fileArray.filter((f) => f.type.startsWith("image/"));
     if (!imageFiles.length) {
-      alert("Sélectionnez au moins une image (JPEG, PNG, GIF, WebP).");
+      toast("Sélectionnez au moins une image (JPEG, PNG, GIF, WebP).", "error");
       return;
     }
 
@@ -71,12 +73,12 @@ export function ProjectImagePicker({
       } else {
         newPreviews.forEach((p) => URL.revokeObjectURL(p.url));
         setPreviewFiles((prev) => prev.filter((x) => !newPreviews.some((n) => n.id === x.id)));
-        alert(data.error || "Erreur upload.");
+        toast(data.error || "Échec de l\u2019envoi des images.", "error");
       }
     } catch {
       newPreviews.forEach((p) => URL.revokeObjectURL(p.url));
       setPreviewFiles((prev) => prev.filter((x) => !newPreviews.some((n) => n.id === x.id)));
-      alert("Erreur upload.");
+      toast("Échec de l\u2019envoi des images.", "error");
     } finally {
       setUploading(false);
     }

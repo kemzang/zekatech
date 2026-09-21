@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { DataUnavailable } from "@/components/data-unavailable";
 
 // Rendu statique regenere toutes les 5 minutes, plus revalidation
 // immediate declenchee par les mutations du back-office.
@@ -19,19 +20,21 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export const metadata = {
-  title: "Services | ZekaTech",
+  title: "Services",
   description: "Développement web, mobile, API et conseil.",
 };
 
 export default async function ServicesPage() {
   let services: Awaited<ReturnType<typeof prisma.service.findMany>> = [];
+  let unavailable = false;
   try {
     services = await prisma.service.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
     });
-  } catch {
-    // Base de données indisponible
+  } catch (e) {
+    console.error("[services] base de données indisponible", e);
+    unavailable = true;
   }
   type ServiceItem = (typeof services)[number];
 
@@ -63,6 +66,7 @@ export default async function ServicesPage() {
       {/* Services grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
+          {unavailable && <DataUnavailable what="Les services sont" />}
           <div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2">
             {services.map((s: ServiceItem) => {
               const Icon = iconMap[s.icon ?? "layout"] ?? Code2;

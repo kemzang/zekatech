@@ -18,13 +18,15 @@ import {
   Line,
 } from "recharts";
 
+// Les couleurs viennent des tokens du theme (SVG accepte var()) plutot que de
+// dupliquer les hexadecimaux de styles/_variables.scss.
 const CHART_COLORS = {
-  primary: "#2dd4bf",
-  secondary: "#f59e0b",
-  accent: "#a78bfa",
-  muted: "#64748b",
-  success: "#22c55e",
-  destructive: "#ef4444",
+  primary: "var(--primary)",
+  secondary: "var(--secondary)",
+  accent: "var(--accent)",
+  muted: "var(--muted-foreground)",
+  success: "var(--success)",
+  destructive: "var(--destructive)",
 };
 
 type ProjectsByStatusItem = { name: string; count: number };

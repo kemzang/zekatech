@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 
 type Service = {
   id: string;
@@ -18,14 +21,34 @@ type Service = {
 
 export function ServicesList({ services }: { services: Service[] }) {
   const router = useRouter();
-  async function deleteService(id: string) {
-    if (!confirm("Désactiver ce service ? Il ne sera plus affiché sur le site.")) return;
+  const { toast } = useToast();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    const id = pendingId;
+    setPendingId(null);
+    if (!id) return;
     const res = await fetch(`/api/admin/services/${id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      toast("Service désactivé.");
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast(data.error || "La désactivation a échoué.", "error");
+    }
   }
 
   return (
-    <div className="space-y-2">
+    <>
+      <ConfirmDialog
+        open={pendingId !== null}
+        title="Désactiver ce service ?"
+        description="Il ne sera plus proposé sur le site. Vous pourrez le réactiver depuis sa page d'édition."
+        confirmLabel="Désactiver"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingId(null)}
+      />
+      <div className="space-y-2">
       {services.length === 0 ? (
         <p className="text-muted-foreground">Aucun service.</p>
       ) : (
@@ -60,7 +83,7 @@ export function ServicesList({ services }: { services: Service[] }) {
                   variant="ghost"
                   size="icon"
                   className="text-destructive"
-                  onClick={() => deleteService(s.id)}
+                  onClick={() => setPendingId(s.id)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -69,6 +92,7 @@ export function ServicesList({ services }: { services: Service[] }) {
           </Card>
         ))
       )}
-    </div>
+      </div>
+    </>
   );
 }

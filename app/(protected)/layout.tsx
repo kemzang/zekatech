@@ -1,5 +1,6 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { SkipLink } from "@/components/skip-link";
 
 export default function ProtectedLayout({
   children,
@@ -8,8 +9,11 @@ export default function ProtectedLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
+      <SkipLink />
       <Header />
-      <main className="flex-1">{children}</main>
+      <main id="main" className="flex-1">
+        {children}
+      </main>
       <Footer />
     </div>
   );

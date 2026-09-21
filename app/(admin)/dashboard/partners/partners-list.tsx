@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 
 type Partner = {
   id: string;
@@ -17,14 +20,34 @@ type Partner = {
 
 export function PartnersList({ partners }: { partners: Partner[] }) {
   const router = useRouter();
-  async function deletePartner(id: string) {
-    if (!confirm("Désactiver ce partenaire ? Il ne sera plus affiché sur le site.")) return;
+  const { toast } = useToast();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    const id = pendingId;
+    setPendingId(null);
+    if (!id) return;
     const res = await fetch(`/api/admin/partners/${id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      toast("Partenaire désactivé.");
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast(data.error || "La désactivation a échoué.", "error");
+    }
   }
 
   return (
-    <div className="space-y-2">
+    <>
+      <ConfirmDialog
+        open={pendingId !== null}
+        title="Désactiver ce partenaire ?"
+        description="Il ne sera plus affiché sur le site. Vous pourrez le réactiver depuis sa page d'édition."
+        confirmLabel="Désactiver"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingId(null)}
+      />
+      <div className="space-y-2">
       {partners.length === 0 ? (
         <p className="text-muted-foreground">Aucun partenaire.</p>
       ) : (
@@ -71,7 +94,7 @@ export function PartnersList({ partners }: { partners: Partner[] }) {
                   variant="ghost"
                   size="icon"
                   className="text-destructive"
-                  onClick={() => deletePartner(p.id)}
+                  onClick={() => setPendingId(p.id)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -80,6 +103,7 @@ export function PartnersList({ partners }: { partners: Partner[] }) {
           </Card>
         ))
       )}
-    </div>
+      </div>
+    </>
   );
 }

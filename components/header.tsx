@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,10 @@ import {
   LayoutDashboard,
   LogIn,
   LogOut,
+  Menu,
   UserPlus,
   UserCircle,
+  X,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
@@ -23,7 +26,12 @@ const nav = [
 
 export function Header() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   function handleLogout() {
     setShowLogoutModal(false);
@@ -37,18 +45,24 @@ export function Header() {
           <Link href="/" className="text-foreground hover:opacity-90 transition-opacity">
             <Logo size="sm" />
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav
+            className="hidden items-center gap-1 md:flex"
+            aria-label="Navigation principale"
+          >
             {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={`rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent/10 hover:text-foreground ${
+                  isActive(item.href) ? "text-foreground" : "text-muted-foreground"
+                }`}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             {status === "loading" ? (
               <span className="text-muted-foreground text-sm">...</span>
             ) : session ? (
@@ -88,7 +102,93 @@ export function Header() {
               </>
             )}
           </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+            aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          >
+            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </Button>
         </div>
+
+        {/* Navigation mobile : sans elle, aucun lien n'etait atteignable
+            sous 768px, la nav etant simplement masquee. */}
+        {menuOpen && (
+          <div
+            id="mobile-nav"
+            className="border-t border-border bg-background md:hidden"
+          >
+            <nav
+              className="container mx-auto flex flex-col px-4 py-2"
+              aria-label="Navigation mobile"
+              onClick={() => setMenuOpen(false)}
+            >
+              {nav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  className={`rounded-md px-3 py-3 text-sm transition-colors hover:bg-accent/10 ${
+                    isActive(item.href)
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <div className="mt-2 flex flex-col gap-2 border-t border-border pb-2 pt-3">
+                {session ? (
+                  <>
+                    {session.user.role === "ADMIN" && (
+                      <Button variant="outline" size="sm" asChild className="w-full justify-start">
+                        <Link href="/dashboard">
+                          <LayoutDashboard className="size-4" />
+                          Dashboard
+                        </Link>
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" asChild className="w-full justify-start">
+                      <Link href="/profile">
+                        <UserCircle className="size-4" />
+                        Mon profil
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setShowLogoutModal(true)}
+                    >
+                      <LogOut className="size-4" />
+                      Déconnexion
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="ghost" size="sm" asChild className="w-full justify-start">
+                      <Link href="/login">
+                        <LogIn className="size-4" />
+                        Connexion
+                      </Link>
+                    </Button>
+                    <Button size="sm" asChild className="w-full justify-start">
+                      <Link href="/register">
+                        <UserPlus className="size-4" />
+                        Inscription
+                      </Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Modal de confirmation de déconnexion */}

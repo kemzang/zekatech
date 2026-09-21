@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { X, Upload } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 type ProjectVideoPickerProps = {
   value: string;
@@ -18,6 +19,7 @@ export function ProjectVideoPicker({
   disabled,
   label = "Vidéo du projet",
 }: ProjectVideoPickerProps) {
+  const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function ProjectVideoPicker({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !file.type.startsWith("video/")) {
-      if (file) alert("Sélectionnez un fichier vidéo (MP4, WebM ou MOV).");
+      if (file) toast("Sélectionnez un fichier vidéo (MP4, WebM ou MOV).", "error");
       return;
     }
 
@@ -43,10 +45,10 @@ export function ProjectVideoPicker({
         onChange(data.url);
         setPreviewUrl(null);
       } else {
-        alert(data.error || "Erreur lors de l'upload de la vidéo.");
+        toast(data.error || "Échec de l\u2019envoi de la vidéo.", "error");
       }
     } catch {
-      alert("Erreur lors de l'upload.");
+      toast("Échec de l\u2019envoi de la vidéo.", "error");
     } finally {
       setUploading(false);
     }
